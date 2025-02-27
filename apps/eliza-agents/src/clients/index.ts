@@ -11,6 +11,8 @@ export async function initializeClients(
   const clients = [];
   const clientTypes = character.clients?.map((str) => str.toLowerCase()) || [];
 
+  console.log("clientTypes", clientTypes);
+
   if (clientTypes.includes("auto")) {
     const autoClient = await AutoClientInterface.start(runtime);
     if (autoClient) clients.push(autoClient);

@@ -165,6 +165,7 @@ wss.on('connection', async (ws) => {
     console.log('Client disconnected');
     openaiWs.close();
   });
+
 });
 
 // Error handling
@@ -180,4 +181,5 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
   res.render('error');
 });
 
+export { app, wss }; 
 export { app, wss }; 

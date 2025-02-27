@@ -4,7 +4,7 @@ import path from 'path';
 import cookieParser from 'cookie-parser';
 import logger from 'morgan';
 import WebSocket from 'ws';
-import { VoiceResponse } from 'twilio/lib/twiml/VoiceResponse';
+import VoiceResponse from 'twilio/lib/twiml/VoiceResponse';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -21,7 +21,8 @@ const VOICE = 'alloy';
 const LOG_EVENT_TYPES = [
   'response.content.done', 'rate_limits.updated', 'response.done',
   'input_audio_buffer.committed', 'input_audio_buffer.speech_stopped',
-  'input_audio_buffer.speech_started', 'response.create', 'session.created'
+  'input_audio_buffer.speech_started', 'response.create', 'session.created', 
+  'conversation.item.created'
 ];
 const SHOW_TIMING_MATH = false;
 
@@ -73,6 +74,27 @@ wss.on('connection', async (ws) => {
   let markQueue: string[] = [];
   let responseStartTimestampTwilio: number | null = null;
 
+  // Wait for OpenAI WebSocket connection
+  openaiWs.on('open', () => {
+    console.log("OpenAI WebSocket connected");
+    
+    // Send initial session configuration once connected
+    const sessionUpdate = {
+      type: "session.update",
+      session: {
+        turn_detection: { type: "server_vad" },
+        input_audio_format: "g711_ulaw",
+        output_audio_format: "g711_ulaw",
+        voice: VOICE,
+        instructions: SYSTEM_MESSAGE,
+        modalities: ["text", "audio"],
+        temperature: 0.8,
+      }
+    };
+    
+    openaiWs.send(JSON.stringify(sessionUpdate));
+  });
+
   // Handle messages from Twilio
   ws.on('message', async (message: string) => {
     try {
@@ -106,6 +128,11 @@ wss.on('connection', async (ws) => {
         console.log(`Received event: ${response.type}`, response);
       }
 
+      // Add handler for speech-to-text results
+      if (response.type === 'conversation.item.created') {
+        console.log('User said:', JSON.stringify(response));
+      }
+
       if (response.type === 'response.audio.delta' && response.delta) {
         const audioPayload = Buffer.from(response.delta, 'base64').toString('base64');
         const audioDelta = {
@@ -132,22 +159,6 @@ wss.on('connection', async (ws) => {
       console.error('Error processing OpenAI message:', error);
     }
   });
-
-  // Send initial session configuration
-  const sessionUpdate = {
-    type: "session.update",
-    session: {
-      turn_detection: { type: "server_vad" },
-      input_audio_format: "g711_ulaw",
-      output_audio_format: "g711_ulaw",
-      voice: VOICE,
-      instructions: SYSTEM_MESSAGE,
-      modalities: ["text", "audio"],
-      temperature: 0.8,
-    }
-  };
-  
-  openaiWs.send(JSON.stringify(sessionUpdate));
 
   // Cleanup on connection close
   ws.on('close', () => {

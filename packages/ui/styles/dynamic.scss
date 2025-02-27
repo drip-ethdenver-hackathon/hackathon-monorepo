@@ -1,0 +1,129 @@
+#dynamic-widget.dynamic-widget__container {
+  z-index: 2147483644 !important;
+}
+
+.dynamic-modal {
+  z-index: 2147483645;
+}
+
+.dynamic-shadow-dom {
+  .dynamic-footer,
+  .powered-by-dynamic,
+  .collect-user-data__success-icon {
+    display: none !important;
+  }
+
+  --dynamic-font-family-primary: "Ubuntu", sans-serif;
+  --dynamic-search-border-radius: 1rem;
+  --dynamic-font-family-numbers: "Nanum Gothic", monospace, sans-serif;
+  --dynamic-base-1: #1a1a1a;
+  --dynamic-base-2: #343437;
+  --dynamic-base-3: #343437;
+  --dynamic-base-4: #343437;
+  --dynamic-brand-hover-color: linear-gradient(
+      0deg,
+      rgba(0, 0, 0, 0.08),
+      rgba(0, 0, 0, 0.08)
+    ),
+    #000;
+  --dynamic-brand-primary-color: #000;
+  --dynamic-brand-secondary-color: rgba(113, 69, 190, 0.15);
+  --dynamic-success-1: #b1eec5;
+  --dynamic-success-2: #b9b9b9;
+  --dynamic-border-radius: 0.75rem;
+  --dynamic-hover: rgba(22, 37, 77, 0.03);
+  --dynamic-info-2: rgba(71, 121, 255, 0.1);
+  --dynamic-error-1: #f63e21;
+  --dynamic-error-2: rgba(255, 70, 70, 0.1);
+  --dynamic-alert-1: #f67c24;
+  --dynamic-alert-2: #faf5cc;
+  --dynamic-footer-background-color: #19191d;
+  --dynamic-footer-text-color: #fafafa;
+  --dynamic-footer-icon-color: #000;
+  --dynamic-loading-animation-gradient: linear-gradient(
+    90deg,
+    hsla(0, 0%, 100%, 0),
+    hsla(0, 0%, 100%, 0.2) 20%,
+    hsla(0, 0%, 100%, 0.5) 60%,
+    hsla(0, 0%, 100%, 0)
+  );
+  --dynamic-overlay: rgba(24, 27, 34, 0.15);
+  --dynamic-shadow-down-1: 0 0.0625rem 0.125rem rgba(24, 39, 75, 0.04);
+  --dynamic-shadow-down-2: 0 0.75rem 1.25rem -0.375rem rgba(24, 39, 75, 0.02),
+    0 1rem 1.625rem -0.25rem rgba(24, 39, 75, 0.04);
+  --dynamic-shadow-down-3: 0 1.5rem 2rem -1.5rem rgba(0, 0, 0, 0.24);
+  --dynamic-shadow-up-1: 0 -0.5rem 3rem -0.5rem rgba(109, 121, 165, 0.16);
+  --dynamic-text-link: #ccfaf7;
+  --dynamic-text-primary: #fafafa;
+  --dynamic-text-secondary: #8a8a8a;
+  --dynamic-text-size-body-mini: 0.75rem;
+  --dynamic-text-size-body-normal: 1.1rem;
+  --dynamic-text-size-body-sm: 0.9rem;
+  --dynamic-text-size-button-primary: 1rem;
+  --dynamic-text-size-button-secondary: 1rem;
+  --dynamic-text-size-numbers-big: 0.875rem;
+  --dynamic-text-size-numbers-medium: 0.75rem;
+  --dynamic-text-size-title: 1.35rem;
+  --dynamic-text-tertiary: #abacb2;
+  --dynamic-badge-background: #1a1a1a;
+  --dynamic-badge-color: #fafafa;
+  --dynamic-badge-dot-background: #000;
+  --dynamic-search-bar-background: #19191d;
+  --dynamic-search-bar-background-hover: #19191d;
+  --dynamic-search-bar-background-focus: #19191d;
+  --dynamic-search-bar-border: 0.0625rem solid #19191d;
+  --dynamic-search-bar-border-hover: 0.0625rem solid #19191d;
+  --dynamic-search-bar-border-focus: 0.0625rem solid #19191d;
+  --dynamic-modal-border: #1a1a1a;
+  --dynamic-modal-width: 26rem;
+  --dynamic-modal-padding: 1.5rem;
+  --dynamic-modal-backdrop-background: rgba(0, 0, 0, 0.25);
+  --dynamic-modal-backdrop-filter: blur(4px);
+  --dynamic-wallet-list-tile-padding: 0.75rem;
+  --dynamic-wallet-list-tile-gap: 0.375rem;
+  --dynamic-wallet-list-max-height: 16.25rem;
+  --dynamic-wallet-list-tile-background: #343437;
+  --dynamic-wallet-list-tile-border: #19191d;
+  --dynamic-wallet-list-tile-shadow: 0 0.0625rem 0.125rem rgba(24, 39, 75, 0.04);
+  --dynamic-wallet-list-tile-background-hover: #2a2a2a;
+  --dynamic-wallet-list-tile-border-hover: #19191d;
+  --dynamic-wallet-list-tile-border-radius: 0.75rem;
+  --dynamic-wallet-list-tile-shadow-hover: 0 0.75rem 1.25rem -0.375rem rgba(24, 39, 75, 0.02),
+    0 1rem 1.625rem -0.25rem rgba(24, 39, 75, 0.04);
+  --dynamic-wallet-list-tile-animation-duration: 150ms;
+  --dynamic-tooltip-color: #383c48;
+  --dynamic-tooltip-text-color: #fafafa;
+  --dynamic-button-border-radius: 0.75rem;
+  --dynamic-initial-view-content-padding: 0rem 1.5rem 1.5rem;
+
+  --dynamic-button-primary-hover: #000;
+  --dynamic-button-primary-background: #000;
+  --dynamic-button-primary-font-size: 0.875rem;
+  --dynamic-button-primary-padding: 0;
+  --dynamic-button-primary-border: 0.0625rem solid #19191d;
+  --dynamic-button-shadow: 0px 2px 3px 0px rgba(24, 39, 75, 0.08);
+  --dynamic-button-secondary-hover: #f7f8fa;
+  --dynamic-button-secondary-background: transparent;
+  --dynamic-button-secondary-font-size: 0.75rem;
+  --dynamic-button-secondary-padding: 0;
+  --dynamic-button-secondary-border: 0.0625rem solid transparent;
+
+  --dynamic-connect-button-background: #fafafa;
+  --dynamic-connect-button-background-hover: #fafafa;
+  --dynamic-connect-button-color: #19191d;
+  --dynamic-connect-button-border: 0.0625rem solid #19191d;
+  --dynamic-connect-button-shadow: 0px 2px 3px 0px rgba(24, 39, 75, 0.08);
+  --dynamic-connect-button-color-hover: #19191d;
+  --dynamic-connect-button-border-hover: 0.0625rem solid #19191d;
+  --dynamic-connect-button-shadow-hover: 0 0.75rem 1.25rem -0.375rem rgba(24, 39, 75, 0.02),
+    0 1rem 1.625rem -0.25rem rgba(24, 39, 75, 0.04);
+  --dynamic-search-padding: 0 1.5rem 0.5rem;
+  --dynamic-layout-content-padding: 0 1.5rem 1.5rem;
+  --dynamic-layout-content-error-padding: 1.5rem 1.5rem 1.5rem;
+  --dynamic-footer-border-top: 0.0625rem solid #343437;
+  --dynamic-footer-padding: 0.75rem 1.5rem 0.75rem;
+  --dynamic-footer-background: transparent;
+  --dynamic-header-border-bottom: 1px solid transparent;
+  --dynamic-header-padding: 1.5rem 1.5rem 1.25rem;
+  --dynamic-header-background: transparent;
+}

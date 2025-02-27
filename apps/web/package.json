@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@privy-io/react-auth": "^2.5.0",
+    "@repo/tailwind-config": "workspace:*",
     "@repo/ui": "workspace:*",
     "next": "^15.1.6",
     "react": "^19.0.0",

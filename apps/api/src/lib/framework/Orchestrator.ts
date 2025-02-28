@@ -23,7 +23,7 @@ export class Orchestrator extends EventEmitter {
     });
   }
 
-  private emitEvent(event: any) {
+  public emitEvent(event: any) {
     for (const ws of this.watchers) {
       if (ws.readyState === WebSocket.OPEN) {
         ws.send(JSON.stringify(event));
@@ -125,6 +125,7 @@ export class Orchestrator extends EventEmitter {
   private async checkAndUpdateAgentEnv(agent: Agent) {
     const agentName = agent.getName();
     const currentStatus = this.agentStatuses[agentName];
+    console.log('Checking and updating agent environment for', agentName, currentStatus);
     if (currentStatus === 'ACTIVE' || currentStatus === 'UPDATING') {
       // We can skip environment updates if agent is busy or
       // prefer some queue, up to your design
@@ -138,6 +139,7 @@ export class Orchestrator extends EventEmitter {
           await agent.initializeEnvironment({ someKey: 'someVal' });
         } catch (err) {
           // If there's an error, you can set status to ERROR or revert to IDLE
+          console.error('Error updating agent environment for', agentName, err);
           this.setAgentStatus(agentName, 'ERROR');
           return;
         }

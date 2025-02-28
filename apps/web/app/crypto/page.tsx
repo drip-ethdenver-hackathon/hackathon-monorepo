@@ -9,7 +9,10 @@ import {
   CardFooter,
   Divider, 
   Progress,
-  Spinner
+  Spinner,
+  Input,
+  Select,
+  SelectItem,
 } from "@repo/ui/components";
 import BottomNavBar from "../../components/BottomNavbar";
 import Logo from "../../components/Logo";
@@ -21,6 +24,13 @@ export default function CryptoPage() {
   const { user } = usePrivy();
   const { fundWallet, isFunding } = useFundWallet();
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
+  const [fundingAmount, setFundingAmount] = useState("1");
+  const [selectedAsset, setSelectedAsset] = useState<"USDC" | "native-currency">("USDC");
+
+  const availableAssets = [
+    { label: "USDC", value: "USDC" as const, icon: "💵" },
+    { label: "ETH", value: "native-currency" as const, icon: "⚡" },
+  ];
 
   // Get the user's wallet address when component mounts
   React.useEffect(() => {
@@ -43,7 +53,10 @@ export default function CryptoPage() {
 
   const handleFundWallet = async () => {
     if (walletAddress) {
-      await fundWallet(walletAddress);
+      await fundWallet(walletAddress, {
+        amount: fundingAmount,
+        asset: selectedAsset,
+      });
     }
   };
 
@@ -80,15 +93,64 @@ export default function CryptoPage() {
             </div>
           </CardBody>
           <Divider />
-          <CardFooter>
+          <CardFooter className="flex flex-col gap-6 p-6">
+            <div className="w-full space-y-4">
+              <h4 className="text-sm font-medium text-default-600">Fund Your Wallet</h4>
+              <div className="flex gap-4 w-full">
+                <div className="flex-1">
+                  <Input
+                    type="number"
+                    value={fundingAmount}
+                    onChange={(e) => setFundingAmount(e.target.value)}
+                    placeholder="0.00"
+                    min="0"
+                    step="0.01"
+                    label="Amount"
+                    size="lg"
+                    labelPlacement="outside"
+                    startContent={
+                      <div className="pointer-events-none flex items-center">
+                        <span className="text-default-400 text-sm">$</span>
+                      </div>
+                    }
+                  />
+                </div>
+                <div className="flex-1">
+                  <Select
+                    label="Select Asset"
+                    selectedKeys={[selectedAsset]}
+                    onChange={(e) => setSelectedAsset(e.target.value as typeof selectedAsset)}
+                    size="lg"
+                    labelPlacement="outside"
+                    classNames={{
+                      trigger: "bg-default-100",
+                      value: "font-medium",
+                    }}
+                  >
+                    {availableAssets.map((asset) => (
+                      <SelectItem 
+                        key={asset.value} 
+                        value={asset.value}
+                        className="font-medium text-black"
+                      >
+                        {asset.label}
+                      </SelectItem>
+                    ))}
+                  </Select>
+                </div>
+              </div>
+            </div>
             <Button 
               color="primary" 
               className="w-full"
+              size="lg"
               onPress={handleFundWallet}
-              isDisabled={!walletAddress || isFunding}
+              isDisabled={!walletAddress || isFunding || !fundingAmount || Number(fundingAmount) <= 0}
               startContent={isFunding ? <Spinner size="sm" color="current" /> : null}
             >
-              {isFunding ? "Processing..." : "Fund Wallet"}
+              {isFunding ? "Processing..." : `Fund ${Number(fundingAmount).toFixed(2)} ${
+                availableAssets.find(a => a.value === selectedAsset)?.label
+              }`}
             </Button>
           </CardFooter>
         </Card>

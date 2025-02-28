@@ -4,8 +4,15 @@ import { useState } from "react";
 import { useFundWallet as usePrivyFundWallet } from "@privy-io/react-auth";
 import { toast } from "@repo/ui/components";
 
+type PrivyAsset = "USDC" | "native-currency" | { erc20: `0x${string}` };
+
+export interface FundWalletParams {
+  amount: string;
+  asset: PrivyAsset;
+}
+
 export interface UseFundWalletResult {
-  fundWallet: (address: string) => Promise<void>;
+  fundWallet: (address: string, params: FundWalletParams) => Promise<void>;
   isFunding: boolean;
   error: Error | null;
 }
@@ -36,12 +43,18 @@ export const useFundWallet = (): UseFundWalletResult => {
     }
   });
 
-  const handleFundWallet = async (address: string) => {
+  const handleFundWallet = async (address: string, { amount, asset }: FundWalletParams) => {
     try {
       setIsFunding(true);
       setError(null);
       
-      await privyFundWallet(address);
+      await privyFundWallet(address, {
+        amount,
+        asset,
+        chain: {
+          id: 8453
+        }
+      });
       
       // Note: We don't set isFunding to false here because the flow is modal-based
       // and will be handled by the onUserExited callback

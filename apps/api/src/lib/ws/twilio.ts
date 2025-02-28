@@ -31,7 +31,7 @@ export function attachTwilio(
       }
     );
 
-    let streamSid: string | null = null;
+    let streamSid: string | undefined;
 
     // Add this: Emit an event to the orchestrator's watchers
     orchestrator.emitEvent({
@@ -68,31 +68,41 @@ export function attachTwilio(
     });
 
     // Handle messages from the Twilio side
-    twilioWs.on('message', async (msg: string) => {
-      const data = JSON.parse(msg);
+    twilioWs.on('message', async (data) => {
+      try {
+        const msg = JSON.parse(data.toString());
+        
+        if (msg.event === 'start') {
+          streamSid = msg.start.streamSid;
+          const phoneNumber = msg.start.customParameters?.From;
 
-      if (data.event === 'start') {
-        streamSid = data.start.streamSid;
-        console.log(chalk.greenBright(`Stream started: ${streamSid}`));
-      }
+          for (const agent of orchestrator.listAgents()) {
+            await agent.initializeEnvironment({ phoneNumber });
+          }
+          
+          console.log(chalk.greenBright(`Stream started: ${streamSid}`));
+        }
 
-      // Add this: Log when we get a transcription from the user
-      if (data.event === 'transcript') {
-        orchestrator.emitEvent({
-          type: 'message',
-          role: 'user',
-          content: data.transcript.text,
-          timestamp: new Date().toISOString()
-        });
-      }
+        // Add this: Log when we get a transcription from the user
+        if (msg.event === 'transcript') {
+          orchestrator.emitEvent({
+            type: 'message',
+            role: 'user',
+            content: msg.transcript.text,
+            timestamp: new Date().toISOString()
+          });
+        }
 
-      if (data.event === 'media' && openaiWs.readyState === WebSocket.OPEN) {
-        openaiWs.send(
-          JSON.stringify({
-            type: "input_audio_buffer.append",
-            audio: data.media.payload
-          })
-        );
+        if (msg.event === 'media' && openaiWs.readyState === WebSocket.OPEN) {
+          openaiWs.send(
+            JSON.stringify({
+              type: "input_audio_buffer.append",
+              audio: msg.media.payload
+            })
+          );
+        }
+      } catch (error) {
+        console.error('Error handling Twilio message:', error);
       }
     });
 

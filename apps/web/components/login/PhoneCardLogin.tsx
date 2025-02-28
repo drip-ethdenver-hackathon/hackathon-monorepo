@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { Button, Input, PhoneInput } from "@repo/ui/components";
-import { useLoginWithSms } from "@privy-io/react-auth";
+import { getAccessToken, useLoginWithSms } from "@privy-io/react-auth";
 import Logo from "../Logo";
 import { useRouter } from "next/navigation";
 
@@ -21,6 +21,8 @@ export default function PhoneLoginCard() {
         wasAlreadyAuthenticated,
         loginMethod,
       });
+      const token = getAccessToken();
+      console.log('token', token);
       router.push("/home");
     },
     onError: (error) => {

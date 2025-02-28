@@ -1,11 +1,13 @@
 "use client";
 
 import React, { useState } from "react";
-import { Button, PhoneInput } from "@repo/ui/components";
+import { Button, Input, PhoneInput } from "@repo/ui/components";
 import { useLoginWithSms } from "@privy-io/react-auth";
 import Logo from "../Logo";
+import { useRouter } from "next/navigation";
 
 export default function PhoneLoginCard() {
+  const router = useRouter();
   const [phone, setPhone] = useState("");
   const [touched, setTouched] = useState(false);
   const [verificationCode, setVerificationCode] = useState("");
@@ -19,7 +21,7 @@ export default function PhoneLoginCard() {
         wasAlreadyAuthenticated,
         loginMethod,
       });
-      // Handle successful login here (e.g., redirect)
+      router.push("/home");
     },
     onError: (error) => {
       console.error("Login failed:", error);
@@ -27,13 +29,32 @@ export default function PhoneLoginCard() {
     },
   });
 
+  // Format phone number to E.164 format (+1XXXXXXXXXX)
+  const formatToE164 = (phoneNumber: string) => {
+    // Remove all non-digit characters
+    const digits = phoneNumber.replace(/\D/g, "");
+    
+    // If it's a 10-digit number, add +1 (US country code)
+    if (digits.length === 10) {
+      return `+1${digits}`;
+    }
+    // If it's already 11 digits and starts with 1, add +
+    if (digits.length === 11 && digits.startsWith("1")) {
+      return `+${digits}`;
+    }
+    return digits;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!showVerification) {
       // Send verification code
       try {
-        await sendCode(phone);
+        const formattedPhone = formatToE164(phone);
+        await sendCode({
+          phoneNumber: formattedPhone,
+        });
         setShowVerification(true);
       } catch (error) {
         console.error("Failed to send code:", error);
@@ -41,7 +62,9 @@ export default function PhoneLoginCard() {
     } else {
       // Verify code
       try {
-        await loginWithCode(verificationCode);
+        await loginWithCode({
+          code: verificationCode,
+        });
       } catch (error) {
         console.error("Failed to verify code:", error);
       }
@@ -65,7 +88,7 @@ export default function PhoneLoginCard() {
           <h1 className="text-2xl font-bold text-primary">Welcome Back</h1>
           <p className="text-default-500">
             {showVerification 
-              ? "Enter the verification code sent to your phone"
+              ? `Enter the verification code sent to ${phone}`
               : "Enter your phone number to continue"
             }
           </p>
@@ -118,7 +141,10 @@ export default function PhoneLoginCard() {
             variant="light"
             onPress={async () => {
               try {
-                await sendCode(phone);
+                const formattedPhone = formatToE164(phone);
+                await sendCode({
+                  phoneNumber: formattedPhone,
+                });
               } catch (error) {
                 console.error("Failed to resend code:", error);
               }

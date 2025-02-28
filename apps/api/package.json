@@ -12,6 +12,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@repo/database": "workspace:*",
     "@fastify/formbody": "^7.0.2",
     "@fastify/static": "^7.0.1",
     "@fastify/websocket": "^8.3.1",
@@ -29,7 +30,8 @@
     "ts-node": "10.9.2",
     "twilio": "^4.23.0",
     "wav": "^1.0.2",
-    "ws": "^8.16.0"
+    "ws": "^8.16.0",
+    "viem": "^2.7.9"
   },
   "devDependencies": {
     "@types/node": "^22.13.5",

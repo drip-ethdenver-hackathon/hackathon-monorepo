@@ -328,6 +328,15 @@
       agentWs.onmessage = (evt) => {
         try {
           const eventData = JSON.parse(evt.data);
+          // Handle message events for chat display
+          if (eventData.type === 'message') {
+            addMessageToChat(
+              eventData.role === 'user' ? 'You' : 'Assistant',
+              eventData.content,
+              eventData.role
+            );
+            return;
+          }
           handleAgentStreamEvent(eventData);
         } catch (err) {
           console.error("Agent stream parse error:", err);

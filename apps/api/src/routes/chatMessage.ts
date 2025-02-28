@@ -28,6 +28,10 @@ export function chatMessageHandler(
     // Append user's message to local conversation store
     conversation.push({ role: "user", content: message });
 
+    for (const agent of orchestrator.listAgents()) {
+      await agent.initializeEnvironment({ phoneNumber: '+1234567890' });
+    }
+
     // Connect to GPT-4 Realtime endpoint
     const openaiWs = new WebSocket(
       "wss://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview",

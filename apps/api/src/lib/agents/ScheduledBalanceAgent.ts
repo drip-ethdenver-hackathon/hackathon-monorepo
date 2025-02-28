@@ -2,12 +2,11 @@ import { Agent } from '../framework/Agent';
 
 export class ScheduledBalanceAgent implements Agent {
   private recentAction: string = 'No recent action.';
-  // For demonstration: store env data + the time we last updated.
   private environment?: any;
   private lastEnvRefresh: number = 0;
 
-  // For example, update environment every 5 seconds:
-  public environmentUpdateIntervalMs = 5 * 1000; // 5sec in ms
+  // We'll say we want environment refresh every 5 seconds:
+  public environmentUpdateIntervalMs = 5_000;
 
   getName(): string {
     return 'scheduled_balance_agent';
@@ -35,44 +34,42 @@ export class ScheduledBalanceAgent implements Agent {
 
   /**
    * Optionally initialize environment data. 
-   * e.g. calling an external service to refresh user info.
    */
   async initializeEnvironment(envData: any): Promise<void> {
     this.environment = envData;
-    // Suppose we do a mock call to fetch a new "balance snapshot" from envData
-    this.recentAction = `Environment updated. Possibly pulled new on-chain data.`;
+    this.recentAction = `Environment updated for scheduled agent. Possibly pulled new on-chain data.`;
     this.lastEnvRefresh = Date.now();
   }
 
   /**
-   * Optionally decide if environment needs refreshing.
-   * e.g. If it's been more than 5 minutes or if usage count has increased.
+   * Decide if environment needs refreshing.
    */
   async shouldUpdateEnvironment(): Promise<boolean> {
     const now = Date.now();
-    return (now - this.lastEnvRefresh) >= this.environmentUpdateIntervalMs!;
+    return (now - this.lastEnvRefresh) >= this.environmentUpdateIntervalMs;
   }
 
   /**
-   * Actually handle the function call.
+   * Return the interval we want to be polled on
    */
+  getUpdateInterval(): number {
+    return this.environmentUpdateIntervalMs;
+  }
+
   async handleTask(args: any): Promise<any> {
     const { coinType } = args;
+    // Mock 1s delay to simulate network call
+    await new Promise((resolve) => setTimeout(resolve, 1000));
 
-    // For demonstration: we might rely on environment data to do the check.
-    // We also do a short mock delay for an API call or DB retrieval.
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    // Some mock logic:
     const mockBalances: Record<string, string> = {
       ETH: '2.75',
       USDC: '1500',
       DAI: '995'
     };
-    const balance = mockBalances[coinType];
 
+    const balance = mockBalances[coinType];
     if (!balance) {
-      this.recentAction = `Tried to check invalid coin type: ${coinType}`;
+      this.recentAction = `Invalid coin type: ${coinType}`;
       return {
         success: false,
         message: `Invalid coin type: ${coinType}`

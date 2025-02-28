@@ -36,21 +36,24 @@ export class ExchangeTokensAgent implements Agent {
     return this.recentAction;
   }
 
-  // Suppose we do not always update environment, so no conditions:
   async shouldUpdateEnvironment?(): Promise<boolean> {
-    // Return false if we typically don't do environment refresh
+    // We typically do not do environment refresh for Exchange.
     return false;
   }
 
   async initializeEnvironment?(envData: any): Promise<void> {
-    // Optionally store environment data
     this.environment = envData;
     this.recentAction = 'Environment init for ExchangeTokensAgent.';
   }
 
+  // We do not require a poll-based update
+  getUpdateInterval?(): number {
+    return 0;
+  }
+
   async handleTask(args: any): Promise<any> {
     const { fromToken, toToken, amount } = args;
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    await new Promise((resolve) => setTimeout(resolve, 2000));
 
     if (fromToken === toToken) {
       this.recentAction = `Attempted exchange from ${fromToken} to same token. Failure.`;

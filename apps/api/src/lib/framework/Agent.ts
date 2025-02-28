@@ -32,24 +32,22 @@ export interface Agent {
   handleTask(args: any): Promise<any>;
 
   /**
-   * (Optional) If the Agent wants to update its environment data dynamically,
-   * it can implement this method. This might be a fetch to an external API
-   * or some other piece of context. 
+   * (Optional) If the Agent wants to update environment data dynamically,
+   * it can implement this method. For example, calling external APIs.
    */
   initializeEnvironment?(envData: any): Promise<void>;
 
   /**
    * (Optional) The Agent can decide if it *should* refresh environment data
-   * at any point, returning `true` if it’s time to do so. 
-   * For example, the agent could keep track of timestamps or usage counts.
+   * at a particular time, returning `true` if it’s time to do so.
    */
   shouldUpdateEnvironment?(): Promise<boolean>;
 
   /**
-   * (Optional) If the Agent wants to refresh environment data on a fixed schedule,
-   * it can return a number (in milliseconds) specifying how frequently the 
-   * Orchestrator should check `shouldUpdateEnvironment()` and then call 
-   * `initializeEnvironment()` if needed. 
+   * (Optional) The Agent can specify how frequently (in ms) the orchestrator
+   * should poll for environment updates. If set to a positive number,
+   * the orchestrator can schedule a repeating check. If not set or 0, 
+   * no poll scheduling is performed.
    */
   getUpdateInterval?(): number;
 }

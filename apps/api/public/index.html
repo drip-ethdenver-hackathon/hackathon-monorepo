@@ -43,6 +43,7 @@
     .message.user { font-weight: bold; }
     .message.assistant { font-style: italic; }
 
+    /* Right panel layout */
     #right-panel {
       display: flex;
       flex-direction: column;
@@ -90,19 +91,25 @@
       border-radius: 6px;
       background: #eee;
       cursor: pointer;
+      text-align: center;
     }
+
     .agent-box:hover {
       border-color: #777;
     }
 
+    /* Different statuses => different classes */
     .agent-idle {
-      background-color: #ddd;
+      background-color: #ddd; /* Gray when idle */
     }
     .agent-active {
-      background-color: #bdf6bd;
+      background-color: #bdf6bd; /* Light green when active */
     }
     .agent-error {
-      background-color: #f6bdbd;
+      background-color: #f6bdbd; /* Light red for errors */
+    }
+    .agent-updating {
+      background-color: #add8e6; /* Light blue for environment updating */
     }
 
     #agent-modal {
@@ -174,6 +181,7 @@
     const agentModalClose = document.getElementById('agent-modal-close');
     const agentInfoDiv = document.getElementById('agent-info');
 
+    // Load conversation from server (demo only)
     window.addEventListener('DOMContentLoaded', async () => {
       try {
         const resp = await fetch('/chat-history');
@@ -188,11 +196,11 @@
       } catch (error) {
         console.error('Failed to load conversation:', error);
       }
-
       await loadAgents();
       connectAgentStream();
     });
 
+    // Connect orchestrator logs:
     let logWs;
     function connectLogStream() {
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -265,6 +273,7 @@
       }
     }
 
+    // Speech
     let recognition;
     if ('webkitSpeechRecognition' in window) {
       recognition = new webkitSpeechRecognition();
@@ -279,7 +288,6 @@
         console.log('Speech recognition error:', event.error);
       };
     }
-
     enableSpeechCheckbox.addEventListener('change', (e) => {
       if (!recognition) {
         alert("Your browser doesn't support the Web Speech API.");
@@ -293,6 +301,7 @@
       }
     });
 
+    // Load Agents from /agents
     async function loadAgents() {
       try {
         const resp = await fetch('/agents');
@@ -307,6 +316,7 @@
       }
     }
 
+    // Agent Stream
     let agentWs;
     function connectAgentStream() {
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -353,24 +363,33 @@
     }
 
     function renderAgents(agents) {
-      const agentDotsDiv = document.getElementById('agent-dots');
-      agentDotsDiv.innerHTML = '';
+      const container = document.getElementById('agent-dots');
+      container.innerHTML = '';
+
       agents.forEach(agent => {
         const box = document.createElement('div');
-        box.className = 'agent-box';
+        box.className = 'agent-box'; 
+
+        // Apply style depending on status
+        if (agent.status === 'ACTIVE') {
+          box.classList.add('agent-active');
+        } else if (agent.status === 'UPDATING') {
+          box.classList.add('agent-updating');
+        } else if (agent.status === 'ERROR') {
+          box.classList.add('agent-error');
+        } else {
+          // default idle style
+          box.classList.add('agent-idle');
+        }
+
+        // Insert text
         box.innerHTML = `
           <strong>${agent.name}</strong><br/>
           <span>${agent.description}</span>
         `;
-        if (agent.status === 'ACTIVE') {
-          box.classList.add('agent-active');
-        } else if (agent.status === 'ERROR') {
-          box.classList.add('agent-error');
-        } else {
-          box.classList.add('agent-idle');
-        }
+
         box.addEventListener('click', () => showAgentModal(agent));
-        agentDotsDiv.appendChild(box);
+        container.appendChild(box);
       });
     }
 

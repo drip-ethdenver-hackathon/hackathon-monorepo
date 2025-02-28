@@ -1,10 +1,8 @@
 import { Agent } from '../framework/Agent';
 
 export class ExchangeTokensAgent implements Agent {
-  /**
-   * Stores last action or context info for display in UI modals.
-   */
   private recentAction: string = 'No recent action.';
+  private environment?: any;
 
   getName(): string {
     return 'exchange_tokens';
@@ -34,12 +32,20 @@ export class ExchangeTokensAgent implements Agent {
     };
   }
 
-  /**
-   * Provide a short textual context or "recent activity"
-   * that can be shown in the UI (the agent modal).
-   */
   getContextInfo(): string {
     return this.recentAction;
+  }
+
+  // Suppose we do not always update environment, so no conditions:
+  async shouldUpdateEnvironment?(): Promise<boolean> {
+    // Return false if we typically don't do environment refresh
+    return false;
+  }
+
+  async initializeEnvironment?(envData: any): Promise<void> {
+    // Optionally store environment data
+    this.environment = envData;
+    this.recentAction = 'Environment init for ExchangeTokensAgent.';
   }
 
   async handleTask(args: any): Promise<any> {
@@ -54,7 +60,7 @@ export class ExchangeTokensAgent implements Agent {
       };
     }
 
-    this.recentAction = `Exchanged ${amount} ${fromToken} -> ${toToken}.`;
+    this.recentAction = `Exchanged ${amount} ${fromToken} -> ${toToken}`;
     return {
       success: true,
       message: `MOCK: Successfully exchanged ${amount} ${fromToken} for ${toToken}`

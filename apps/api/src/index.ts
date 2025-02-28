@@ -13,6 +13,7 @@ import { attachTwilio } from './lib/ws/twilio';
 import { attachOrchestrator } from './lib/ws/orchestrator';
 import { chatMessageHandler } from './routes/chatMessage';
 import { agentsHandler } from './routes/agents';
+import { ScheduledBalanceAgent } from './lib/agents/ScheduledBalanceAgent';
 
 dotenv.config();
 
@@ -24,12 +25,15 @@ const orchestrator = new Orchestrator();
 orchestrator.registerAgent(new SendCryptoAgent());
 orchestrator.registerAgent(new ExchangeTokensAgent());
 orchestrator.registerAgent(new CheckBalanceAgent());
+orchestrator.registerAgent(new ScheduledBalanceAgent());
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+
 if (!OPENAI_API_KEY) {
   console.log(chalk.redBright('Missing OPENAI_API_KEY in environment.'));
   throw new Error('Missing OPENAI_API_KEY in .env file.');
 }
+
 const PORT = parseInt(process.env.PORT || '5050');
 
 const SYSTEM_MESSAGE = `

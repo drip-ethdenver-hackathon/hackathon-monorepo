@@ -2,6 +2,7 @@ import { Agent } from '../framework/Agent';
 
 export class SendCryptoAgent implements Agent {
   private recentAction: string = 'No recent action.';
+  private environment?: any;
 
   getName(): string {
     return 'send_crypto';
@@ -37,9 +38,25 @@ export class SendCryptoAgent implements Agent {
     return this.recentAction;
   }
 
+  async shouldUpdateEnvironment?(): Promise<boolean> {
+    // For demonstration, let's say we only update environment 30% of the time
+    return Math.random() < 0.3;
+  }
+
+  async initializeEnvironment?(envData: any): Promise<void> {
+    this.environment = envData;
+    this.recentAction = 'Updated environment for SendCryptoAgent.';
+  }
+
+  // We could say we want a 30-second poll, for example:
+  getUpdateInterval?(): number {
+    // 30 seconds in ms
+    return 30_000;
+  }
+
   async handleTask(args: any): Promise<any> {
     const { phoneNumber, amount, coinType } = args;
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    await new Promise((resolve) => setTimeout(resolve, 2000));
 
     if (!phoneNumber.match(/^\+?[\d-]{10,}$/)) {
       this.recentAction = `Failed send: invalid phoneNumber ${phoneNumber}`;
@@ -48,6 +65,7 @@ export class SendCryptoAgent implements Agent {
         message: 'Invalid phone number format'
       };
     }
+
     this.recentAction = `Sent ${amount} ${coinType} to ${phoneNumber}`;
     return {
       success: true,

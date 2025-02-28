@@ -1,6 +1,8 @@
 import { Agent } from '../framework/Agent';
 
 export class SendCryptoAgent implements Agent {
+  private recentAction: string = 'No recent action.';
+
   getName(): string {
     return 'send_crypto';
   }
@@ -31,21 +33,22 @@ export class SendCryptoAgent implements Agent {
     };
   }
 
-  async handleTask(args: any): Promise<any> {
-    // your actual send logic or calls to blockchains, etc.
-    // Here, we keep the mock version:
-    const { phoneNumber, amount, coinType } = args;
+  getContextInfo(): string {
+    return this.recentAction;
+  }
 
-    // Simulate network delay
+  async handleTask(args: any): Promise<any> {
+    const { phoneNumber, amount, coinType } = args;
     await new Promise(resolve => setTimeout(resolve, 2000));
 
     if (!phoneNumber.match(/^\+?[\d-]{10,}$/)) {
+      this.recentAction = `Failed send: invalid phoneNumber ${phoneNumber}`;
       return {
         success: false,
         message: 'Invalid phone number format'
       };
     }
-
+    this.recentAction = `Sent ${amount} ${coinType} to ${phoneNumber}`;
     return {
       success: true,
       message: `MOCK: Successfully sent ${amount} ${coinType} to ${phoneNumber}`

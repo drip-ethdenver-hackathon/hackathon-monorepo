@@ -1,4 +1,5 @@
 import WebSocket from 'ws';
+import chalk from 'chalk';
 import { Orchestrator } from '../framework/Orchestrator';
 
 
@@ -7,8 +8,7 @@ export function attachOrchestrator(
   orchestrator: Orchestrator
 ) {
   wss.on('connection', (ws) => {
-    console.log("Orchestrator stream client connected.");
-    // Subscribe this WS to orchestrator events
+    console.log(chalk.greenBright("Orchestrator stream client connected."));
     orchestrator.subscribe(ws);
   });
 }

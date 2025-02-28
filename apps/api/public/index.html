@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>AI Orchestrator Demo</title>
+  <style>
+    body {
+      margin: 0; 
+      padding: 0; 
+      font-family: sans-serif;
+      display: flex; 
+      height: 100vh;
+    }
+
+    #chat-container, 
+    #right-panel {
+      flex: 1; 
+      padding: 10px; 
+      overflow-y: auto;
+      border: 1px solid #ccc; 
+      box-sizing: border-box;
+    }
+
+    #chat-container {
+      display: flex; 
+      flex-direction: column;
+    }
+
+    #messages {
+      flex: 1; 
+      overflow-y: auto; 
+      margin-bottom: 10px; 
+      border: 1px solid #ddd; 
+      padding: 5px;
+      background: #fafafa;
+    }
+
+    #messageInput { width: 70%; }
+
+    .message {
+      margin: 5px 0;
+    }
+    .message.user { font-weight: bold; }
+    .message.assistant { font-style: italic; }
+
+    #right-panel {
+      display: flex;
+      flex-direction: column;
+      margin-left: -1px; 
+      background: #f1f1f1;
+    }
+
+    #log-container {
+      flex: 1; 
+      background: #f1f1f1;
+      border: 1px solid #ddd;
+      overflow-y: auto;
+      margin-bottom: 5px;
+    }
+
+    #log-list { 
+      list-style: none; 
+      padding: 0; 
+      margin: 0; 
+    }
+
+    #log-list li {
+      margin: 4px 0;
+      padding: 3px 5px;
+      background: #fff;
+      border: 1px solid #ddd;
+      font-size: 0.85em;
+      word-wrap: break-word;
+    }
+
+    #agent-container {
+      flex: 1; 
+      overflow-y: auto;
+      border: 1px solid #ddd;
+      padding: 5px;
+      background: #fafafa;
+    }
+
+    .agent-box {
+      display: inline-block;
+      width: 110px;
+      padding: 6px;
+      margin: 4px;
+      border: 2px solid #aaa;
+      border-radius: 6px;
+      background: #eee;
+      cursor: pointer;
+    }
+    .agent-box:hover {
+      border-color: #777;
+    }
+
+    .agent-idle {
+      background-color: #ddd;
+    }
+    .agent-active {
+      background-color: #bdf6bd;
+    }
+    .agent-error {
+      background-color: #f6bdbd;
+    }
+
+    #agent-modal {
+      display: none;
+      position: fixed;
+      z-index: 999;
+      left: 50%; 
+      top: 50%; 
+      transform: translate(-50%, -50%);
+      background: #fff;
+      border: 2px solid #333;
+      padding: 20px;
+      max-width: 400px;
+      max-height: 60%;
+      overflow-y: auto;
+    }
+
+    #agent-modal h4 {
+      margin-top: 0;
+    }
+
+    #agent-modal .close {
+      cursor: pointer; 
+      color: red; 
+      float: right; 
+      font-weight: bold;
+      margin-left: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div id="chat-container">
+    <h3>Chat with the AI Orchestrator</h3>
+    <div id="messages"></div>
+    <div>
+      <input type="text" id="messageInput" placeholder="Try 'Send 10 USDC' or 'What's my balance?'" />
+      <button id="sendBtn">Send</button>
+      <label>
+        <input type="checkbox" id="enableSpeech" /> Speech-to-Text
+      </label>
+    </div>
+  </div>
+
+  <div id="right-panel">
+    <div id="log-container">
+      <h3>Orchestrator Logs</h3>
+      <ul id="log-list"></ul>
+    </div>
+    <div id="agent-container">
+      <h3>Available Agents</h3>
+      <div id="agent-dots"></div>
+    </div>
+  </div>
+
+  <div id="agent-modal">
+    <span class="close" id="agent-modal-close">X</span>
+    <h4>Agent Details</h4>
+    <div id="agent-info"></div>
+  </div>
+
+  <script>
+    const messagesDiv = document.getElementById('messages');
+    const messageInput = document.getElementById('messageInput');
+    const sendBtn = document.getElementById('sendBtn');
+    const logList = document.getElementById('log-list');
+    const enableSpeechCheckbox = document.getElementById('enableSpeech');
+    const agentDotsDiv = document.getElementById('agent-dots');
+    const agentModal = document.getElementById('agent-modal');
+    const agentModalClose = document.getElementById('agent-modal-close');
+    const agentInfoDiv = document.getElementById('agent-info');
+
+    window.addEventListener('DOMContentLoaded', async () => {
+      try {
+        const resp = await fetch('/chat-history');
+        if (resp.ok) {
+          const data = await resp.json();
+          if (data.conversation) {
+            data.conversation.forEach(msg => {
+              addMessageToChat(msg.role === 'user' ? 'You' : 'Assistant', msg.content, msg.role);
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load conversation:', error);
+      }
+
+      await loadAgents();
+      connectAgentStream();
+    });
+
+    let logWs;
+    function connectLogStream() {
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const host = window.location.host;
+      const wsUrl = `${protocol}//${host}/orchestrator-stream`;
+
+      logWs = new WebSocket(wsUrl);
+      logWs.onopen = () => appendLog("Connected to orchestrator stream");
+      logWs.onmessage = (evt) => {
+        try {
+          const data = JSON.parse(evt.data);
+          appendLog(JSON.stringify(data));
+        } catch (error) {
+          appendLog("Log parse error: " + error);
+        }
+      };
+      logWs.onclose = () => {
+        appendLog("Orchestrator stream closed. Reconnecting in 3s...");
+        setTimeout(connectLogStream, 3000);
+      };
+      logWs.onerror = (err) => {
+        appendLog("Log stream error: " + err);
+      };
+    }
+    connectLogStream();
+
+    function appendLog(content) {
+      const li = document.createElement('li');
+      li.textContent = content;
+      logList.appendChild(li);
+      logList.scrollTop = logList.scrollHeight;
+    }
+
+    sendBtn.addEventListener('click', sendMessage);
+    messageInput.addEventListener('keyup', (e) => {
+      if (e.key === 'Enter') sendMessage();
+    });
+
+    function addMessageToChat(sender, msg, roleClass) {
+      const div = document.createElement('div');
+      div.className = `message ${roleClass || ''}`;
+      div.textContent = `${sender}: ${msg}`;
+      messagesDiv.appendChild(div);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+
+    async function sendMessage() {
+      const text = messageInput.value.trim();
+      if (!text) return;
+      addMessageToChat('You', text, 'user');
+
+      messageInput.value = '';
+
+      try {
+        const resp = await fetch('/chat-message', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: text })
+        });
+        const data = await resp.json();
+        console.log("[Front-end] Received response from server:", data);
+        if (data.error) {
+          addMessageToChat('System', 'Error: ' + data.error, 'assistant');
+        } else {
+          // Provide a fallback if data.response is empty or null
+          addMessageToChat('Assistant', data.response || '(No final text?)', 'assistant');
+        }
+      } catch (err) {
+        addMessageToChat('System', 'Error sending message: ' + err, 'assistant');
+      }
+    }
+
+    let recognition;
+    if ('webkitSpeechRecognition' in window) {
+      recognition = new webkitSpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = false;
+
+      recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        messageInput.value = transcript;
+      };
+      recognition.onerror = (event) => {
+        console.log('Speech recognition error:', event.error);
+      };
+    }
+
+    enableSpeechCheckbox.addEventListener('change', (e) => {
+      if (!recognition) {
+        alert("Your browser doesn't support the Web Speech API.");
+        enableSpeechCheckbox.checked = false;
+        return;
+      }
+      if (e.target.checked) {
+        recognition.start();
+      } else {
+        recognition.stop();
+      }
+    });
+
+    async function loadAgents() {
+      try {
+        const resp = await fetch('/agents');
+        if (resp.ok) {
+          const data = await resp.json();
+          if (data.agents) {
+            renderAgents(data.agents);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load agents:', error);
+      }
+    }
+
+    let agentWs;
+    function connectAgentStream() {
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const host = window.location.host;
+      const wsUrl = `${protocol}//${host}/agent-stream`;
+
+      agentWs = new WebSocket(wsUrl);
+      agentWs.onopen = () => console.log("Connected to agent-stream");
+      agentWs.onmessage = (evt) => {
+        try {
+          const eventData = JSON.parse(evt.data);
+          handleAgentStreamEvent(eventData);
+        } catch (err) {
+          console.error("Agent stream parse error:", err);
+        }
+      };
+      agentWs.onclose = () => {
+        console.log("Agent stream closed. Reconnecting in 3s...");
+        setTimeout(connectAgentStream, 3000);
+      };
+      agentWs.onerror = (err) => {
+        console.log("Agent stream error:", err);
+      };
+    }
+
+    let agentList = [];
+    function handleAgentStreamEvent(event) {
+      if (event.type === 'agent_full_list') {
+        agentList = event.agents; 
+        renderAgents(agentList);
+      } else if (event.type === 'agent_added') {
+        agentList.push(event.agent);
+        renderAgents(agentList);
+      } else if (event.type === 'agent_removed') {
+        agentList = agentList.filter(a => a.name !== event.name);
+        renderAgents(agentList);
+      } else if (event.type === 'agent_status_changed') {
+        const idx = agentList.findIndex(a => a.name === event.name);
+        if (idx >= 0) {
+          agentList[idx].status = event.status;
+          renderAgents(agentList);
+        }
+      }
+    }
+
+    function renderAgents(agents) {
+      const agentDotsDiv = document.getElementById('agent-dots');
+      agentDotsDiv.innerHTML = '';
+      agents.forEach(agent => {
+        const box = document.createElement('div');
+        box.className = 'agent-box';
+        box.innerHTML = `
+          <strong>${agent.name}</strong><br/>
+          <span>${agent.description}</span>
+        `;
+        if (agent.status === 'ACTIVE') {
+          box.classList.add('agent-active');
+        } else if (agent.status === 'ERROR') {
+          box.classList.add('agent-error');
+        } else {
+          box.classList.add('agent-idle');
+        }
+        box.addEventListener('click', () => showAgentModal(agent));
+        agentDotsDiv.appendChild(box);
+      });
+    }
+
+    function showAgentModal(agent) {
+      agentModal.style.display = 'block';
+      agentInfoDiv.innerHTML = `
+        <p><strong>Name:</strong> ${agent.name}</p>
+        <p><strong>Description:</strong> ${agent.description}</p>
+        <p><strong>Recent Context:</strong> ${agent.contextInfo}</p>
+        <p><strong>Status:</strong> ${agent.status || 'IDLE'}</p>
+      `;
+    }
+
+    agentModalClose.addEventListener('click', () => {
+      agentModal.style.display = 'none';
+    });
+  </script>
+</body>
+</html>

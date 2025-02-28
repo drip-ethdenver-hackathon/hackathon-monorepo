@@ -1,30 +1,23 @@
-import { Agent } from './Agent';
 import WebSocket from 'ws';
+import { Agent } from './Agent';
+import EventEmitter from 'events';
 
-export class Orchestrator {
+export class Orchestrator extends EventEmitter {
   private agents: Map<string, Agent> = new Map();
-
-  // Store a list of watchers that want real-time updates
   private watchers: Set<WebSocket> = new Set();
+  private agentStatuses: Record<string, string> = {};
 
   constructor() {
-    // Optionally accept environment/context
+    super();
   }
 
-  /**
-   * Registers a new WebSocket to receive Orchestrator events.
-   */
   public subscribe(ws: WebSocket) {
     this.watchers.add(ws);
-    // Remove from set on close
     ws.on('close', () => {
       this.watchers.delete(ws);
     });
   }
 
-  /**
-   * Emit an event to all subscribed watchers.
-   */
   private emitEvent(event: any) {
     for (const ws of this.watchers) {
       if (ws.readyState === WebSocket.OPEN) {
@@ -33,16 +26,27 @@ export class Orchestrator {
     }
   }
 
-  /**
-   * Registers an Agent. 
-   */
   public registerAgent(agent: Agent) {
     this.agents.set(agent.getName(), agent);
+    this.agentStatuses[agent.getName()] = 'IDLE';
+    this.emit('agent_added', {
+      name: agent.getName(),
+      description: agent.getDescription(),
+      contextInfo: agent.getContextInfo(),
+      status: 'IDLE'
+    });
+    this.emitEvent({
+      type: 'agent_invocation',
+      functionName: 'SYSTEM',
+      arguments: { msg: `Registered agent: ${agent.getName()}` },
+      timestamp: new Date().toISOString()
+    });
   }
 
-  /**
-   * Returns a listing of Agents as "tools" or "functions" for the LLM.
-   */
+  public listAgents(): Agent[] {
+    return Array.from(this.agents.values());
+  }
+
   public getOpenAIFunctionDefinitions(): any[] {
     const definitions: any[] = [];
     for (const agent of this.agents.values()) {
@@ -56,16 +60,18 @@ export class Orchestrator {
     return definitions;
   }
 
-  /**
-   * Orchestrator sees an OpenAI function_call and routes to the correct Agent.
-   * 
-   * We emit events before and after the call, so watchers see the steps.
-   */
+  public getAgentStatus(name: string): string | undefined {
+    return this.agentStatuses[name];
+  }
+
+  public setAgentStatus(name: string, status: string) {
+    this.agentStatuses[name] = status;
+  }
+
   public async handleFunctionCall(functionName: string, functionArgs: any) {
     const agent = this.agents.get(functionName);
     if (!agent) {
       const errorMsg = `No registered agent found for functionName = ${functionName}`;
-      // Notify watchers about the error
       this.emitEvent({
         type: 'agent_error',
         functionName,
@@ -75,7 +81,6 @@ export class Orchestrator {
       throw new Error(errorMsg);
     }
 
-    // Notify watchers that we're about to invoke an agent
     this.emitEvent({
       type: 'agent_invocation',
       functionName,
@@ -83,29 +88,40 @@ export class Orchestrator {
       timestamp: new Date().toISOString()
     });
 
-    // Invoke the agent
+    this.emit('agent_invoked', functionName);
+    this.agentStatuses[functionName] = 'ACTIVE';
+
     let result;
     try {
       result = await agent.handleTask(functionArgs);
-      
-      // Notify watchers of success
       this.emitEvent({
         type: 'agent_result',
         functionName,
         result,
         timestamp: new Date().toISOString()
       });
+      this.emit('agent_result', functionName, true);
+      this.agentStatuses[functionName] = 'IDLE';
     } catch (err: any) {
-      // Notify watchers of error
       this.emitEvent({
         type: 'agent_error',
         functionName,
         error: err.message || String(err),
         timestamp: new Date().toISOString()
       });
+      this.emit('agent_result', functionName, false);
+      this.agentStatuses[functionName] = 'ERROR';
       throw err;
     }
 
     return result;
+  }
+
+  public onAgentInvoked(cb: (agentName: string) => void) {
+    this.on('agent_invoked', cb);
+  }
+
+  public onAgentResult(cb: (agentName: string, success: boolean) => void) {
+    this.on('agent_result', cb);
   }
 }

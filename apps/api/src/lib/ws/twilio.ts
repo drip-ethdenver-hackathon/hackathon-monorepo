@@ -1,4 +1,5 @@
 import WebSocket from 'ws';
+import chalk from 'chalk';
 import { Orchestrator } from '../framework/Orchestrator';
 
 /**
@@ -17,7 +18,7 @@ export function attachTwilio(
   systemMessage: string
 ) {
   wss.on('connection', (twilioWs) => {
-    console.log("Twilio Media Stream WebSocket client connected.");
+    console.log(chalk.greenBright("Twilio Media Stream WebSocket client connected."));
 
     // Connect to OpenAI Realtime
     const openaiWs = new WebSocket(
@@ -34,7 +35,7 @@ export function attachTwilio(
 
     // When OpenAI socket opens, send the session update
     openaiWs.on('open', () => {
-      console.log("Connected to OpenAI WebSocket.");
+      console.log(chalk.greenBright("Connected to OpenAI WebSocket."));
 
       openaiWs.send(
         JSON.stringify({
@@ -60,7 +61,7 @@ export function attachTwilio(
 
       if (data.event === 'start') {
         streamSid = data.start.streamSid;
-        console.log(`Stream started: ${streamSid}`);
+        console.log(chalk.greenBright(`Stream started: ${streamSid}`));
       }
 
       if (data.event === 'media' && openaiWs.readyState === WebSocket.OPEN) {
@@ -128,13 +129,13 @@ export function attachTwilio(
 
     // Cleanup on Twilio side close
     twilioWs.on('close', () => {
-      console.log("Twilio WebSocket closed.");
+      console.log(chalk.redBright("Twilio WebSocket closed."));
       openaiWs.close();
     });
 
     // Cleanup on OpenAI side close
     openaiWs.on('close', () => {
-      console.log("OpenAI WebSocket closed.");
+      console.log(chalk.redBright("OpenAI WebSocket closed."));
       twilioWs.close();
     });
   });

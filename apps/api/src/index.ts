@@ -2,36 +2,36 @@ import express from 'express';
 import dotenv from 'dotenv';
 import http from 'http';
 import WebSocket from 'ws';
-import VoiceResponse from 'twilio/lib/twiml/VoiceResponse';
-
-// Our orchestrator + agents
+import chalk from 'chalk';
+import { incomingCallRouter } from './routes/incomingCall';
+import { simulateCallRouter } from './routes/simulateCall';
 import { Orchestrator } from './lib/framework/Orchestrator';
 import { SendCryptoAgent } from './lib/agents/SendCryptoAgent';
 import { ExchangeTokensAgent } from './lib/agents/ExchangeTokensAgent';
 import { CheckBalanceAgent } from './lib/agents/CheckBalanceAgent';
-
 import { attachTwilio } from './lib/ws/twilio';
 import { attachOrchestrator } from './lib/ws/orchestrator';
+import { chatMessageHandler } from './routes/chatMessage';
+import { agentsHandler } from './routes/agents';
 
 dotenv.config();
 
 const app = express();
+app.use(express.json());
+app.use(express.static('public'));
 
-// Create orchestrator and register agents
 const orchestrator = new Orchestrator();
 orchestrator.registerAgent(new SendCryptoAgent());
 orchestrator.registerAgent(new ExchangeTokensAgent());
 orchestrator.registerAgent(new CheckBalanceAgent());
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-
 if (!OPENAI_API_KEY) {
+  console.log(chalk.redBright('Missing OPENAI_API_KEY in environment.'));
   throw new Error('Missing OPENAI_API_KEY in .env file.');
 }
-
 const PORT = parseInt(process.env.PORT || '5050');
 
-// System message for GPT-based orchestration
 const SYSTEM_MESSAGE = `
 You are the Orchestration Assistant, responsible for coordinating with specialized sub-agents 
 to fulfill user requests.
@@ -58,51 +58,91 @@ to fulfill user requests.
    Only detail what's necessary to accomplish the user’s objective.
 `;
 
-// Basic middleware
-app.use(express.json());
-
-// Routes
 app.get('/', (req, res) => {
-  res.json({
-    status: true,
-    message: 'Up and running.'
-  });
+  res.redirect('/index.html');
 });
 
-app.all('/incoming-call', (req, res) => {
-  const response = new VoiceResponse();
-  const host = req.get('host');
-  response.connect().stream({ url: `wss://${host}/media-stream` });
+app.use('/incoming-call', incomingCallRouter);
 
-  res.type('text/xml');
-  res.send(response.toString());
-});
+app.post(
+  '/chat-message',
+  chatMessageHandler(orchestrator, SYSTEM_MESSAGE, OPENAI_API_KEY)
+);
+
+app.use('/simulate-call', simulateCallRouter);
+
+app.use('/agents', agentsHandler(orchestrator));
 
 const server = http.createServer(app);
 
-// =========== TWILIO MEDIA STREAM =============
 const mediaStreamServer = new WebSocket.Server({ noServer: true });
 attachTwilio(mediaStreamServer, orchestrator, OPENAI_API_KEY, SYSTEM_MESSAGE);
 
-// =========== ORCHESTRATOR LOG STREAM =========
 const orchestratorStreamServer = new WebSocket.Server({ noServer: true });
 attachOrchestrator(orchestratorStreamServer, orchestrator);
 
+const agentStreamServer = new WebSocket.Server({ noServer: true });
+const agentStreamClients = new Set<WebSocket>();
+
+agentStreamServer.on('connection', (ws) => {
+  console.log(chalk.greenBright('Agent stream client connected.'));
+  agentStreamClients.add(ws);
+  const fullList = orchestrator.listAgents().map(agent => ({
+    name: agent.getName(),
+    description: agent.getDescription(),
+    contextInfo: agent.getContextInfo(),
+    status: orchestrator.getAgentStatus(agent.getName()) || 'IDLE'
+  }));
+  ws.send(JSON.stringify({ type: 'agent_full_list', agents: fullList }));
+
+  ws.on('close', () => {
+    console.log(chalk.yellow('Agent stream client disconnected.'));
+    agentStreamClients.delete(ws);
+  });
+});
+
+function broadcastAgentEvent(eventData: any) {
+  console.log(chalk.magenta('Broadcasting agent event:'), eventData);
+  for (const ws of agentStreamClients) {
+    if (ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify(eventData));
+    }
+  }
+}
+
+orchestrator.onAgentInvoked((agentName) => {
+  console.log(chalk.blueBright(`Agent invoked: ${agentName}, setting status to ACTIVE.`));
+  broadcastAgentEvent({ type: 'agent_status_changed', name: agentName, status: 'ACTIVE' });
+});
+
+orchestrator.onAgentResult((agentName, success) => {
+  const status = success ? 'IDLE' : 'ERROR';
+  console.log(chalk.blueBright(`Agent result: ${agentName}, success=${success}, new status=${status}`));
+  broadcastAgentEvent({ type: 'agent_status_changed', name: agentName, status });
+});
+
 server.on('upgrade', (request, socket, head) => {
   if (request.url === '/media-stream') {
+    console.log(chalk.cyan('Upgrading connection to media-stream WebSocket.'));
     mediaStreamServer.handleUpgrade(request, socket, head, (ws) => {
       mediaStreamServer.emit('connection', ws, request);
     });
   } else if (request.url === '/orchestrator-stream') {
+    console.log(chalk.cyan('Upgrading connection to orchestrator-stream WebSocket.'));
     orchestratorStreamServer.handleUpgrade(request, socket, head, (ws) => {
       orchestratorStreamServer.emit('connection', ws, request);
     });
+  } else if (request.url === '/agent-stream') {
+    console.log(chalk.cyan('Upgrading connection to agent-stream WebSocket.'));
+    agentStreamServer.handleUpgrade(request, socket, head, (ws) => {
+      agentStreamServer.emit('connection', ws, request);
+    });
   } else {
+    console.log(chalk.red(`Unknown WebSocket upgrade request: ${request.url}. Destroying socket.`));
     socket.destroy();
   }
 });
 
-// Start listening
 server.listen(PORT, () => {
-  console.log(`Server is listening on port ${PORT}`);
+  console.log(chalk.green(`Server is listening on port ${PORT}`));
 });

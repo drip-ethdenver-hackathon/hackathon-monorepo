@@ -136,7 +136,16 @@ export abstract class BaseWalletAgent implements Agent {
       // Get wallet address
       const walletDetails = await this.getWalletDetails();
       console.log('Wallet details:', walletDetails);
-      const address = walletDetails.success ? walletDetails.details.address : null;
+      
+      // Parse the wallet details string to extract the address
+      let address = null;
+      if (walletDetails) {
+        const addressMatch = walletDetails.details.match(/Address:\s*([0-9a-fA-Fx]+)/);
+        console.log('Address match:', addressMatch);
+        if (addressMatch && addressMatch[1]) {
+          address = addressMatch[1].trim();
+        }
+      }
       
       // Prepare wallet data for storage
       const agentName = this.getName();
@@ -488,7 +497,7 @@ export abstract class BaseWalletAgent implements Agent {
       
       // Find the get_wallet_details action
       const actions = this.agentKitClient!.getActions();
-      const walletDetailsAction = actions.find(a => a.name === "get_wallet_details");
+      const walletDetailsAction = actions.find(a => a.name === "WalletActionProvider_get_wallet_details");
       
       if (!walletDetailsAction) {
         throw new Error("get_wallet_details action not found");

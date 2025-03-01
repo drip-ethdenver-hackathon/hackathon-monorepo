@@ -20,6 +20,8 @@ import { AgentKitBasedAgent } from './lib/agents/CDP_AgentKit';
 import { indexerRouter } from './routes/indexer';
 import { connectRouter } from './routes/connect';
 import { PagesIndexAgent } from './lib/agents/PagesIndexAgent';
+import { WalletTransferAgent } from './lib/agents/WalletTransferAgent';
+import { PhoneWalletLookupAgent } from './lib/agents/PhoneWalletLookupAgent';
 
 dotenv.config();
 
@@ -50,6 +52,8 @@ const orchestrator = new Orchestrator();
 orchestrator.registerAgent(new SearchAgent(process.env.ORA_API_KEY || '', 'deepseek-ai/DeepSeek-V3'));
 orchestrator.registerAgent(new PagesIndexAgent());
 orchestrator.registerAgent(new AgentKitBasedAgent(process.env.CDP_API_KEY_NAME || '', process.env.CDP_API_KEY_PRIVATE || ''));
+orchestrator.registerAgent(new WalletTransferAgent(process.env.CDP_API_KEY_NAME || '', process.env.CDP_API_KEY_PRIVATE || ''));
+orchestrator.registerAgent(new PhoneWalletLookupAgent());
 
 orchestrator.registerAgent(
   new CheckBalanceAgent(

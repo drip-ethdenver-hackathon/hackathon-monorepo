@@ -358,7 +358,7 @@ export abstract class BaseWalletAgent implements Agent {
         // Import required viem modules
         const { createWalletClient, http } = await import("viem");
         const { generatePrivateKey, privateKeyToAccount } = await import("viem/accounts");
-        const { baseSepolia } = await import("viem/chains");
+        const { base } = await import("viem/chains");
         
         // Generate a new private key if none is provided
         const privateKey = this.walletConfig?.privateKey || generatePrivateKey();
@@ -374,7 +374,7 @@ export abstract class BaseWalletAgent implements Agent {
         // Create a wallet client
         const client = createWalletClient({
           account,
-          chain: baseSepolia,
+          chain: base,
           transport: http(),
         });
         

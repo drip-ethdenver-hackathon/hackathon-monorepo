@@ -25,6 +25,7 @@ import { createWalletClient, Hex } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { base } from "viem/chains";
 import { http as viemHttp } from "viem";
+import { CoinbaseOnrampAgent } from "./lib/agents/CoinbaseOnrampAgent";
 
 dotenv.config();
 
@@ -84,6 +85,10 @@ orchestrator.registerAgent(
 
 orchestrator.registerAgent(
   new SearchAgent(process.env.CDP_API_KEY_NAME || '', process.env.CDP_API_KEY_PRIVATE || '')
+);
+
+orchestrator.registerAgent(
+  new CoinbaseOnrampAgent(process.env.CDP_API_KEY_NAME || '', process.env.CDP_API_KEY_PRIVATE || '')
 );
 
 // After registering, initialize the environment with the Pinecone client

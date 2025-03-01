@@ -1,7 +1,7 @@
 import { Agent } from "../framework/Agent";
 import { prisma } from "@repo/database";
 import { createPublicClient, http, formatUnits, erc20Abi } from "viem";
-import { arbitrum, abstract, optimism, mainnet, unichain, zkSync, flowMainnet } from "viem/chains";
+import { arbitrum, abstract, optimism, mainnet, unichain, zkSync, flowMainnet, base } from "viem/chains";
 import { BaseWalletAgent } from "./BaseWalletAgent";
 import dotenv from "dotenv";
 
@@ -39,6 +39,7 @@ export class CheckBalanceAgent extends BaseWalletAgent {
     zkSync: zkSync,
     unichain: unichain,
     flow: flowMainnet,
+    base: base,
   };
 
   private erc20Whitelist: Record<string, Record<string, { address: string; decimals: number }>> = {
@@ -319,6 +320,9 @@ export class CheckBalanceAgent extends BaseWalletAgent {
 
       if (args.erc20s && this.erc20Whitelist[chain.toLowerCase()]) {
         const whitelist = this.erc20Whitelist[chain.toLowerCase()];
+
+        console.log({ whitelist, args });
+        
         for (const tokenSymbol of args.erc20s) {
           if (whitelist[tokenSymbol]) {
             const tokenData = whitelist[tokenSymbol];

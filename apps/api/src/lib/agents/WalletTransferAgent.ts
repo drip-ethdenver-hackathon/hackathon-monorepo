@@ -82,9 +82,6 @@ export class WalletTransferAgent extends BaseWalletAgent {
         where: { agentName }
       });
 
-      console.log('agentName', agentName);
-      console.log('wallet', wallet);
-
       if (!wallet) {
         throw new Error(`No wallet found for agent: ${agentName}`);
       }
@@ -194,9 +191,6 @@ export class WalletTransferAgent extends BaseWalletAgent {
       const fromWalletInfo = await this.getAgentWalletInfo(fromAgentName);
       const toWalletInfo = await this.getAgentWalletInfo(toAgentName);
       
-      console.log('Source wallet info:', fromWalletInfo);
-      console.log('Destination wallet info:', toWalletInfo);
-      
       // Step 2: Create a new AgentKit client directly from the seed
       this.recentAction = `Creating AgentKit client for ${fromAgentName}`;
       
@@ -241,17 +235,13 @@ export class WalletTransferAgent extends BaseWalletAgent {
           throw new Error(`Could not determine address for destination agent ${toAgentName}`);
         }
         
-        console.log('Retrieved destination address:', destinationAddress);
       }
-
-      console.log('Destination address:', destinationAddress);
 
       // Step 4: Perform the transfer
       this.recentAction = `Transferring ${amount} ${tokenType === "native" ? "native tokens" : "ERC20 tokens"} from ${fromAgentName} to ${toAgentName}`;
       
       // Find the appropriate action based on token type
       const actions = sourceAgentKit.getActions();
-      console.log('Available actions:', actions.map(a => a.name));
       
       const actionName = tokenType === "native" 
         ? "WalletActionProvider_native_transfer" 
@@ -269,8 +259,6 @@ export class WalletTransferAgent extends BaseWalletAgent {
         value: amount
       };
       
-      console.log('Action parameters:', actionParams);
-      
       // Add ERC20-specific parameters
       if (tokenType === "erc20") {
         actionParams.contractAddress = tokenAddress;
@@ -278,9 +266,7 @@ export class WalletTransferAgent extends BaseWalletAgent {
       
       // Execute the transfer
       const response = await transferAction.invoke(actionParams);
-      
-      console.log('Transfer response:', response);
-      
+            
       this.recentAction = `Successfully transferred ${amount} from ${fromAgentName} to ${toAgentName}`;
       
       return {

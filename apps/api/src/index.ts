@@ -21,8 +21,10 @@ import { WalletTransferAgent } from "./lib/agents/WalletTransferAgent";
 import { PhoneWalletLookupAgent } from "./lib/agents/PhoneWalletLookupAgent";
 import { IndexedDatabaseFetcherAgent } from './lib/agents/IndexedDatabaseFetcherAgent';
 import { Pinecone } from "@pinecone-database/pinecone";
-import { createWalletClient } from "viem";
+import { createWalletClient, Hex } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
+import { base } from "viem/chains";
+import { http as viemHttp } from "viem";
 
 dotenv.config();
 
@@ -111,8 +113,8 @@ async function getSpenderWalletClient() {
  
   const spenderWallet = await createWalletClient({
     account: spenderAccount,
-    chain: baseMainnet,
-    transport: http(),
+    chain: base,
+    transport: viemHttp(),
   });
   return spenderWallet;
 }

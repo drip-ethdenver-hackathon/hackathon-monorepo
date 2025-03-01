@@ -110,8 +110,6 @@ export function attachTwilio(
     openaiWs.on('message', async (rawMsg: string) => {
       const response = JSON.parse(rawMsg);
 
-      console.log('OpenAI response:', JSON.stringify(response, null, 2));
-
       // Add this: Log when we get a complete transcript from the assistant
       if (response.type === 'response.audio_transcript.done') {
         orchestrator.emitEvent({

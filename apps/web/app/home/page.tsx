@@ -50,8 +50,6 @@ export default function HomePage() {
     chainId: base.id,
   });
 
-  console.log(balance);
-
   return (
     <AuthGuard>
       <div className="w-full max-w-md mx-auto p-4 pb-20 bg-white">

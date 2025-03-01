@@ -161,9 +161,6 @@ export class AgentKitBasedAgent extends BaseWalletAgent {
    */
   async handleTask(args: any): Promise<any> {
     const { actionName, ...actionParams } = args;
-
-    console.log('actionName', actionName);
-    console.log('actionParams', actionParams);
     
     // Update recentAction for diagnostic or logging
     this.recentAction = `AgentKitBasedAgent received request for action: ${actionName || 'list actions'}`;
@@ -197,7 +194,6 @@ export class AgentKitBasedAgent extends BaseWalletAgent {
       
       // Execute the action with provided parameters
       const response = await action.invoke(actionParams);
-      console.log("Response from action:", response);
       this.recentAction = `Executed AgentKit action '${actionName}'`;
 
       return {

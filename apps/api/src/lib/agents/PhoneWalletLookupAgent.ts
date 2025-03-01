@@ -99,10 +99,20 @@ export class PhoneWalletLookupAgent extends BaseWalletAgent {
           const normalizedPhone = this.normalizePhoneNumber(phoneNumber);
           this.recentAction = `Looking up wallet for phone: ${normalizedPhone}`;
           
-          const user = await prisma.user.findUnique({
+          // Try with full number first
+          let user = await prisma.user.findUnique({
             where: { phone: normalizedPhone },
             select: { wallet: true }
           });
+
+          // If not found and number starts with +1, try without area code
+          if (!user && normalizedPhone.startsWith('+1')) {
+            const withoutAreaCode = '+1' + normalizedPhone.slice(4); // Remove area code
+            user = await prisma.user.findUnique({
+              where: { phone: withoutAreaCode },
+              select: { wallet: true }
+            });
+          }
           
           if (!user) {
             return {

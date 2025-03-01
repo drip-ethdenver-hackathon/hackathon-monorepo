@@ -155,8 +155,7 @@ export class CheckBalanceAgent extends BaseWalletAgent {
     const currencies = await this.fetchSupportedCurrencies();
   
     const match = currencies.find((coin: any) => coin.name.toLowerCase() === name);
-    console.log({ currencies , name});
-    
+    // console.log({ currencies , name});
     return match ? match.id : null;
   }
 
@@ -317,7 +316,7 @@ export class CheckBalanceAgent extends BaseWalletAgent {
       }
 
       let erc20Results: { token: string; balance: number; usdValue: number; usdPrice: number }[] = [];
-      
+
       if (args.erc20s && this.erc20Whitelist[chain.toLowerCase()]) {
         const whitelist = this.erc20Whitelist[chain.toLowerCase()];
         for (const tokenSymbol of args.erc20s) {

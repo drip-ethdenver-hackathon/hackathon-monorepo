@@ -1,16 +1,15 @@
 import { Agent } from "../framework/Agent";
 import { oraApi } from "../framework/interfaces/oraApi";
+import { BaseWalletAgent } from "./BaseWalletAgent";
 
-export class SearchAgent implements Agent {
-  private recentAction: string = "No recent action.";
-  private oraModelName: string;
+import dotenv from "dotenv";
 
-  constructor(
-    private oraApiKey: string,
-    modelName: string
-  ) {
-    this.oraModelName = modelName || "deepseek-ai/DeepSeek-V3";
-  }
+dotenv.config();
+
+export class SearchAgent extends BaseWalletAgent {
+  public recentAction: string = "No recent action.";
+  private oraModelName: string = "deepseek-ai/DeepSeek-V3";
+  private oraApiKey: string = process.env.ORA_API_KEY || "";
 
   getName(): string {
     return "search_agent";

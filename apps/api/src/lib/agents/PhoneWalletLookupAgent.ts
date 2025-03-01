@@ -1,11 +1,12 @@
 import { Agent } from '../framework/Agent';
 import { prisma } from '@repo/database';
+import { BaseWalletAgent } from './BaseWalletAgent';
 
 /**
  * Agent that provides lookup functionality between phone numbers and wallet addresses
  */
-export class PhoneWalletLookupAgent implements Agent {
-  private recentAction: string = 'No recent action.';
+export class PhoneWalletLookupAgent extends BaseWalletAgent {
+  public recentAction: string = 'No recent action.';
 
   getName(): string {
     return 'phone_wallet_lookup';

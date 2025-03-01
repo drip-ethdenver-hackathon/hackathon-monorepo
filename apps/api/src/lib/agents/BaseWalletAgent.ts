@@ -135,6 +135,7 @@ export abstract class BaseWalletAgent implements Agent {
       
       // Get wallet address
       const walletDetails = await this.getWalletDetails();
+      console.log('Wallet details:', walletDetails);
       const address = walletDetails.success ? walletDetails.details.address : null;
       
       // Prepare wallet data for storage
@@ -513,7 +514,7 @@ export abstract class BaseWalletAgent implements Agent {
    * Get the native token balance of the wallet
    * @returns Native token balance information
    */
-  async getNativeBalance(): Promise<any> {
+  async getAgentNativeBalance(): Promise<any> {
     try {
       await this.initializeAgentKit();
       
@@ -591,7 +592,7 @@ export abstract class BaseWalletAgent implements Agent {
    * @returns The current wallet balance as a string, or null if unavailable
    */
   get balance(): Promise<string | null> {
-    return this.getNativeBalance()
+    return this.getAgentNativeBalance()
       .then(result => result.success ? result.balance : null)
       .catch(() => null);
   }

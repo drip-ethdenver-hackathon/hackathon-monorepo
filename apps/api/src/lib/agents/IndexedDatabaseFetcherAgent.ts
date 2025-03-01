@@ -15,7 +15,7 @@ export class IndexedDatabaseFetcherAgent extends BaseWalletAgent {
     openaiApiKey: string,
     cdpApiKeyPrivateKey: string = ""
   ) {
-    super("", cdpApiKeyPrivateKey);
+    super(process.env.CDP_API_KEY_NAME || "", process.env.CDP_API_KEY_PRIVATE || "");
     this.pineconeClient = pineconeClient;
     this.openaiClient = new OpenAI({
       apiKey: openaiApiKey,

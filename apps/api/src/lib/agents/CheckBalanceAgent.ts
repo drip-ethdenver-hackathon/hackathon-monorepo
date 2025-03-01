@@ -2,9 +2,13 @@ import { Agent } from "../framework/Agent";
 import { prisma } from "@repo/database";
 import { createPublicClient, http, formatUnits, erc20Abi } from "viem";
 import { arbitrum, abstract, optimism, mainnet, unichain, zkSync, flowMainnet } from "viem/chains";
+import { BaseWalletAgent } from "./BaseWalletAgent";
+import dotenv from "dotenv";
 
-export class CheckBalanceAgent implements Agent {
-  private recentAction: string = "No recent action.";
+dotenv.config();
+
+export class CheckBalanceAgent extends BaseWalletAgent {
+  public recentAction: string = "No recent action.";
   private environment?: any;
   private lastEnvUpdate: number = 0;
   private coinGeckoCache: Map<string, { timestamp: number; data: any }> = new Map();
@@ -64,6 +68,7 @@ export class CheckBalanceAgent implements Agent {
   };
 
   constructor(cgApiKey: string, openaiApiKey: string) {
+    super(process.env.CDP_API_KEY_NAME || "", process.env.CDP_API_KEY_PRIVATE || "");
     this.cgApiKey = cgApiKey;
     this.openaiApiKey = openaiApiKey;
   }

@@ -1,11 +1,11 @@
 import { Agent } from '../framework/Agent';
 import { indexPages } from '../scraper/indexPages'; // <-- the file above
-
+import { BaseWalletAgent } from './BaseWalletAgent';
 /**
  * An agent that crawls pages (by BFS) and indexes them into Pinecone.
  */
-export class PagesIndexAgent implements Agent {
-  private recentAction: string = 'No recent action.';
+export class PagesIndexAgent extends BaseWalletAgent {
+  public recentAction: string = 'No recent action.';
   private environment?: any;
   private lastEnvUpdate: number = 0;
   private environmentUpdateInterval = 5 * 60_1000; // 5 minutes

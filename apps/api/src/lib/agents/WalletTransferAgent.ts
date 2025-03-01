@@ -151,7 +151,7 @@ export class WalletTransferAgent extends BaseWalletAgent {
       await this.initializeAgentKit();
       
       // Get the wallet details to extract the address
-      const details = await this.getNativeBalance();
+      const details = await this.getAgentNativeBalance();
       
       if (!details.success || !details.address) {
         throw new Error("Failed to get wallet address");

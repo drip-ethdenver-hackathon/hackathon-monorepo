@@ -20,6 +20,8 @@ import { AgentKitBasedAgent } from './lib/agents/CDP_AgentKit';
 import { indexerRouter } from './routes/indexer';
 import { connectRouter } from './routes/connect';
 import { PagesIndexAgent } from './lib/agents/PagesIndexAgent';
+import { WalletTransferAgent } from './lib/agents/WalletTransferAgent';
+import { PhoneWalletLookupAgent } from './lib/agents/PhoneWalletLookupAgent';
 
 dotenv.config();
 
@@ -50,6 +52,8 @@ const orchestrator = new Orchestrator();
 orchestrator.registerAgent(new SearchAgent(process.env.ORA_API_KEY || '', 'deepseek-ai/DeepSeek-V3'));
 orchestrator.registerAgent(new PagesIndexAgent());
 orchestrator.registerAgent(new AgentKitBasedAgent(process.env.CDP_API_KEY_NAME || '', process.env.CDP_API_KEY_PRIVATE || ''));
+orchestrator.registerAgent(new WalletTransferAgent(process.env.CDP_API_KEY_NAME || '', process.env.CDP_API_KEY_PRIVATE || ''));
+orchestrator.registerAgent(new PhoneWalletLookupAgent());
 
 orchestrator.registerAgent(
   new CheckBalanceAgent(
@@ -73,11 +77,11 @@ const PORT = parseInt(process.env.PORT || "5050");
 const SYSTEM_MESSAGE = `
 You are the Orchestration Assistant, responsible for coordinating with specialized sub-agents to fulfill user requests.
 
-1. **Discover & Call Agents:** You have access to multiple registered agents (tools/functions) that handle tasks such as sending crypto, exchanging tokens, checking balances, or performing lookups. When you need specific functionality, call the relevant agent by name, providing correct JSON arguments according to its schema. Do not alter the user’s input in ways that change the intended context.
+1. **Discover & Call Agents:** You have access to multiple registered agents (tools/functions) that handle tasks such as sending crypto, exchanging tokens, checking balances, or performing lookups. When you need specific functionality, call the relevant agent by name, providing correct JSON arguments according to its schema. Do not alter the user's input in ways that change the intended context.
 
-2. **Non-Deterministic Reasoning:** Reason flexibly about the user’s request, breaking down complex requests into multiple steps if needed. You may call multiple agents or re-check data until you have sufficient information to respond confidently.
+2. **Non-Deterministic Reasoning:** Reason flexibly about the user's request, breaking down complex requests into multiple steps if needed. You may call multiple agents or re-check data until you have sufficient information to respond confidently.
 
-3. **Limited Search Attempts:** You may consult a search or external retrieval agent **up to 5 times** if needed to fully address the user’s request. Use these searches judiciously and stop when you have enough data. If any aspect of the request is unclear, attempt a search for additional context before finalizing your response and suggest the next step to the user if necessary.
+3. **Limited Search Attempts:** You may consult a search or external retrieval agent **up to 5 times** if needed to fully address the user's request. Use these searches judiciously and stop when you have enough data. If any aspect of the request is unclear, attempt a search for additional context before finalizing your response and suggest the next step to the user if necessary.
 
 4. **Central Coordination:** You are the final decision maker. Defer tasks to sub-agents only when relevant, then gather their results and form a concise, direct response or next action. If multiple agents can perform similar tasks, choose the most appropriate based on context.
 
@@ -122,15 +126,33 @@ attachOrchestrator(orchestratorStreamServer, orchestrator);
 const agentStreamServer = new WebSocket.Server({ noServer: true });
 const agentStreamClients = new Set<WebSocket>();
 
-agentStreamServer.on("connection", (ws) => {
+agentStreamServer.on("connection", async (ws) => {
   console.log(chalk.greenBright("Agent stream client connected."));
   agentStreamClients.add(ws);
-  const fullList = orchestrator.listAgents().map((agent) => ({
-    name: agent.getName(),
-    description: agent.getDescription(),
-    contextInfo: agent.getContextInfo(),
-    status: orchestrator.getAgentStatus(agent.getName()) || "IDLE",
+  
+  // Get the list of agents with enhanced information
+  const fullList = await Promise.all(orchestrator.listAgents().map(async (agent) => {
+    const info = {
+      name: agent.getName(),
+      description: agent.getDescription(),
+      contextInfo: agent.getContextInfo(),
+      status: orchestrator.getAgentStatus(agent.getName()) || "IDLE",
+      balance: null
+    };
+    
+    // Check if agent is a BaseWalletAgent and get balance
+    if (typeof (agent as any).balance === 'function' || 
+        typeof (agent as any).balance === 'object') {
+      try {
+        info.balance = await (agent as any).balance;
+      } catch (err) {
+        console.log(`Error getting balance for ${agent.getName()}: ${err}`);
+      }
+    }
+    
+    return info;
   }));
+  
   ws.send(JSON.stringify({ type: "agent_full_list", agents: fullList }));
 
   ws.on("close", () => {

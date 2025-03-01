@@ -400,7 +400,36 @@
         } else {
           box.classList.add('agent-idle');
         }
-        box.innerHTML = `<strong>${agent.name}</strong>`;
+        
+        // Create the agent name element
+        const nameElement = document.createElement('strong');
+        nameElement.textContent = agent.name;
+        
+        // Create the content div
+        const contentDiv = document.createElement('div');
+        contentDiv.style.display = 'flex';
+        contentDiv.style.flexDirection = 'column';
+        contentDiv.style.alignItems = 'center';
+        contentDiv.style.justifyContent = 'center';
+        contentDiv.style.width = '100%';
+        contentDiv.style.height = '100%';
+        
+        // Add the name to the content div
+        contentDiv.appendChild(nameElement);
+        
+        // Add balance if available
+        if (agent.balance) {
+          const balanceElement = document.createElement('div');
+          balanceElement.style.marginTop = '10px';
+          balanceElement.style.fontSize = '0.9em';
+          balanceElement.style.fontWeight = 'normal';
+          balanceElement.textContent = `Balance: ${agent.balance}`;
+          contentDiv.appendChild(balanceElement);
+        }
+        
+        // Add the content div to the box
+        box.appendChild(contentDiv);
+        
         box.addEventListener('click', () => showAgentModal(agent));
         container.appendChild(box);
       });
@@ -411,6 +440,9 @@
       agentInfoDiv.innerHTML = `
         <p><strong>Name:</strong> ${agent.name}</p>
         <p><strong>Status:</strong> ${agent.status || 'IDLE'}</p>
+        ${agent.balance ? `<p><strong>Balance:</strong> ${agent.balance}</p>` : ''}
+        <p><strong>Description:</strong> ${agent.description || 'No description'}</p>
+        <p><strong>Context:</strong> ${agent.contextInfo || 'No context'}</p>
       `;
     }
 

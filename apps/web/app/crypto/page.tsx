@@ -110,7 +110,7 @@ export default function CryptoPage() {
                     labelPlacement="outside"
                     startContent={
                       <div className="pointer-events-none flex items-center">
-                        <span className="text-default-400 text-sm">$</span>
+                        <span className="text-default-400 text-sm"></span>
                       </div>
                     }
                   />

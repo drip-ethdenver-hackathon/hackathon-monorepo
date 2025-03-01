@@ -165,7 +165,6 @@ export class Orchestrator extends EventEmitter {
       throw new Error(errorMsg);
     }
 
-    // Possibly do an environment update if needed
     if (agent.shouldUpdateEnvironment && (await agent.shouldUpdateEnvironment()) === true) {
       this.setAgentStatus(functionName, 'UPDATING');
       if (agent.initializeEnvironment) {

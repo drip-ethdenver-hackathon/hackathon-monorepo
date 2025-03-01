@@ -14,6 +14,7 @@ import { attachOrchestrator } from './lib/ws/orchestrator';
 import { chatMessageHandler } from './routes/chatMessage';
 import { agentsHandler } from './routes/agents';
 import { ScheduledBalanceAgent } from './lib/agents/ScheduledBalanceAgent';
+import { SearchAgent } from './lib/agents/SearchAgent';
 
 dotenv.config();
 
@@ -22,10 +23,12 @@ app.use(express.json());
 app.use(express.static('public'));
 
 const orchestrator = new Orchestrator();
-orchestrator.registerAgent(new SendCryptoAgent());
-orchestrator.registerAgent(new ExchangeTokensAgent());
-orchestrator.registerAgent(new CheckBalanceAgent());
-orchestrator.registerAgent(new ScheduledBalanceAgent());
+
+// orchestrator.registerAgent(new SendCryptoAgent());
+// orchestrator.registerAgent(new ExchangeTokensAgent());
+// orchestrator.registerAgent(new CheckBalanceAgent());
+// orchestrator.registerAgent(new ScheduledBalanceAgent());
+orchestrator.registerAgent(new SearchAgent(process.env.ORA_API_KEY || '', 'deepseek-ai/DeepSeek-V3'));
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 

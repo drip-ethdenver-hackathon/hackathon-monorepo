@@ -49,12 +49,7 @@ export class ScheduledBalanceAgent implements Agent {
     return (now - this.lastEnvRefresh) >= this.environmentUpdateIntervalMs;
   }
 
-  /**
-   * Return the interval we want to be polled on
-   */
-  getUpdateInterval(): number {
-    return this.environmentUpdateIntervalMs;
-  }
+
 
   async handleTask(args: any): Promise<any> {
     const { coinType } = args;

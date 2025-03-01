@@ -46,10 +46,7 @@ export class ExchangeTokensAgent implements Agent {
     this.recentAction = 'Environment init for ExchangeTokensAgent.';
   }
 
-  // We do not require a poll-based update
-  getUpdateInterval?(): number {
-    return 0;
-  }
+
 
   async handleTask(args: any): Promise<any> {
     const { fromToken, toToken, amount } = args;

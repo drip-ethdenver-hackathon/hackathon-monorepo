@@ -48,11 +48,6 @@ export class SendCryptoAgent implements Agent {
     this.recentAction = 'Updated environment for SendCryptoAgent.';
   }
 
-  // We could say we want a 30-second poll, for example:
-  getUpdateInterval?(): number {
-    // 30 seconds in ms
-    return 30_000;
-  }
 
   async handleTask(args: any): Promise<any> {
     const { phoneNumber, amount, coinType } = args;

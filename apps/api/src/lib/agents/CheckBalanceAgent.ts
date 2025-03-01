@@ -63,16 +63,12 @@ export class CheckBalanceAgent implements Agent {
             ethereum: { type: 'string', description: 'Wallet address on Ethereum chain (optional)' }
           },
           required: ['base']
-        },
+        }, 
         userPrompt: {
           type: 'string',
           description: 'A free-text prompt describing your wallet information (if structured data is not provided).'
         }
       },
-      oneOf: [
-        { required: ['wallets'] },
-        { required: ['userPrompt'] }
-      ]
     };
   }
 

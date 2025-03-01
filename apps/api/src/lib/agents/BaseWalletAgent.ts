@@ -265,14 +265,11 @@ export abstract class BaseWalletAgent implements Agent {
    * Initialize a CDP wallet provider
    */
   private async initializeCdpWallet(): Promise<CdpWalletProvider> {
-    console.log('Initializing CDP wallet with config:', {
-      ...this.walletConfig,
-      cdpWalletData: this.walletConfig?.cdpWalletData ? '[REDACTED]' : undefined
-    });
-    
+
     const config: any = {
       apiKeyName: this.cdpApiKeyName,
       apiKeyPrivateKey: this.cdpApiKeyPrivateKey,
+      networkId: 'base-mainnet',
     };
 
     if (this.walletConfig?.networkId) {

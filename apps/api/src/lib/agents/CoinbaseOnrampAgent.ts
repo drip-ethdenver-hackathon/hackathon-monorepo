@@ -1,6 +1,9 @@
 import axios from 'axios';
 import { BaseWalletAgent } from './BaseWalletAgent';
 import dotenv from 'dotenv';
+import { sign } from 'jsonwebtoken';
+import crypto from 'crypto';
+
 
 dotenv.config();
 
@@ -26,8 +29,13 @@ interface OnrampArgs {
  * via Coinbase Onramp API.
  */
 export class CoinbaseOnrampAgent extends BaseWalletAgent {
+  private cdpApiKeyFullName: string;
+
   constructor(cdpApiKeyName?: string, cdpApiKeyPrivateKey?: string) {
     super(cdpApiKeyName, cdpApiKeyPrivateKey);
+    this.cdpApiKeyName = cdpApiKeyName || process.env.CDP_API_KEY_NAME || '';
+    this.cdpApiKeyPrivateKey = cdpApiKeyPrivateKey || process.env.CDP_API_KEY_PRIVATE_KEY || '';
+    this.cdpApiKeyFullName = process.env.CDP_API_KEY_FULL_NAME || '';
   }
 
   getName(): string {
@@ -107,6 +115,48 @@ export class CoinbaseOnrampAgent extends BaseWalletAgent {
     return this.recentAction || 'No recent action.';
   }
 
+  /**
+   * Generate a JWT token for Coinbase API authentication
+   */
+  private generateJWT(requestMethod: string, requestPath: string): string {
+    const url = 'api.developer.coinbase.com';
+    const uri = requestMethod + ' ' + url + requestPath;
+    
+    try {
+      // Format the private key properly
+      let privateKey = this.cdpApiKeyPrivateKey;
+      
+      // Replace literal '\n' strings with actual newlines
+      privateKey = privateKey.replace(/\\n/g, '\n');
+      
+      console.log('Formatted privateKey:', privateKey);
+      console.log('cdpApiKeyFullName:', this.cdpApiKeyFullName);
+      
+      const token = sign(
+        {
+          iss: 'cdp',
+          nbf: Math.floor(Date.now() / 1000),
+          exp: Math.floor(Date.now() / 1000) + 120,
+          sub: this.cdpApiKeyFullName,
+          uri,
+        },
+        privateKey,
+        {
+          algorithm: 'ES256',
+          header: {
+            kid: this.cdpApiKeyFullName,
+            nonce: crypto.randomBytes(16).toString('hex'),
+          },
+        }
+      );
+      
+      return token;
+    } catch (error) {
+      console.error('Error generating JWT:', error);
+      throw new Error(`Failed to generate JWT: ${error.message}`);
+    }
+  }
+
   async handleTask(args: OnrampArgs): Promise<any> {
     const {
       purchaseCurrency,
@@ -144,13 +194,17 @@ export class CoinbaseOnrampAgent extends BaseWalletAgent {
         quotePayload.subdivision = subdivision;
       }
 
-      // Use your real authentication method or header
+      // Generate JWT for this specific request
+      const requestPath = '/onramp/v1/buy/quote';
+      const jwt = this.generateJWT('POST', requestPath);
+
+      // Use JWT authentication
       const quoteResp = await axios.post(
-        'https://api.developer.coinbase.com/onramp/v1/buy/quote',
+        'https://api.developer.coinbase.com' + requestPath,
         quotePayload,
         {
           headers: {
-            'CDP-API-KEY': process.env.CDP_API_KEY,
+            'Authorization': `Bearer ${jwt}`,
             'Content-Type': 'application/json'
           },
         }

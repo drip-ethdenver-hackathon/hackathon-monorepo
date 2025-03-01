@@ -32,15 +32,12 @@ importers:
       '@fastify/websocket':
         specifier: ^8.3.1
         version: 8.3.1(bufferutil@4.0.9)(utf-8-validate@5.0.10)
-<<<<<<< Updated upstream
-      '@privy-io/server-auth':
-        specifier: ^1.18.11
-        version: 1.18.11(bufferutil@4.0.9)(encoding@0.1.13)(utf-8-validate@5.0.10)(viem@2.23.5(bufferutil@4.0.9)(typescript@5.7.3)(utf-8-validate@5.0.10)(zod@3.24.2))
-=======
       '@pinecone-database/pinecone':
         specifier: ^5.1.0
         version: 5.1.0
->>>>>>> Stashed changes
+      '@privy-io/server-auth':
+        specifier: ^1.18.11
+        version: 1.18.11(bufferutil@4.0.9)(encoding@0.1.13)(utf-8-validate@5.0.10)(viem@2.23.5(bufferutil@4.0.9)(typescript@5.7.3)(utf-8-validate@5.0.10)(zod@3.24.2))
       '@repo/database':
         specifier: workspace:*
         version: link:../../packages/database
@@ -99,21 +96,18 @@ importers:
         specifier: ^8.18.0
         version: 8.18.0(bufferutil@4.0.9)(utf-8-validate@5.0.10)
     devDependencies:
-<<<<<<< Updated upstream
-      '@types/cors':
-        specifier: ^2.8.17
-        version: 2.8.17
-=======
       '@types/chalk':
         specifier: ^2.2.4
         version: 2.2.4
       '@types/cheerio':
         specifier: ^0.22.35
         version: 0.22.35
+      '@types/cors':
+        specifier: ^2.8.17
+        version: 2.8.17
       '@types/express':
         specifier: ^5.0.0
         version: 5.0.0
->>>>>>> Stashed changes
       '@types/node':
         specifier: ^22.13.5
         version: 22.13.5
@@ -6819,18 +6813,16 @@ packages:
   webidl-conversions@4.0.2:
     resolution: {integrity: sha512-YQ+BmxuTgd6UXZW3+ICGfyqRyHXVlD5GtQr5+qjiNW7bF0cqrzX500HVXPBOvgXb5YnzDd+h0zqyv61KUD7+Sg==}
 
-<<<<<<< Updated upstream
-  whatwg-fetch@3.6.20:
-    resolution: {integrity: sha512-EqhiFU6daOA8kpjOWTL0olhVOF3i7OrFzSYiGsEMB8GcXS+RrzauAERX65xMeNWVqxA6HXH2m69Z9LaKKdisfg==}
-=======
   whatwg-encoding@3.1.1:
     resolution: {integrity: sha512-6qN4hJdMwfYBtE3YBTTHhoeuUrDBPZmbQaxWAqSALV/MeEnR5z1xd8UKud2RAkFoPkmB+hli1TZSnyi84xz1vQ==}
     engines: {node: '>=18'}
 
+  whatwg-fetch@3.6.20:
+    resolution: {integrity: sha512-EqhiFU6daOA8kpjOWTL0olhVOF3i7OrFzSYiGsEMB8GcXS+RrzauAERX65xMeNWVqxA6HXH2m69Z9LaKKdisfg==}
+
   whatwg-mimetype@4.0.0:
     resolution: {integrity: sha512-QaKxh0eNIi2mE9p2vEdzfagOKHCcj1pJ56EEHGQOVxp8r9/iszLUUV7v89x9O1p/T+NlTM5W7jW6+cz4Fq1YVg==}
     engines: {node: '>=18'}
->>>>>>> Stashed changes
 
   whatwg-url@5.0.0:
     resolution: {integrity: sha512-saE57nupxk6v3HY35+jzBwYa0rKSy0XR8JSxZPwgLr7ys0IBzhGviA1/TUGJLmSVqs8pb9AnvICXEuOHLprYTw==}
@@ -15615,15 +15607,13 @@ snapshots:
 
   webidl-conversions@4.0.2: {}
 
-<<<<<<< Updated upstream
-  whatwg-fetch@3.6.20: {}
-=======
   whatwg-encoding@3.1.1:
     dependencies:
       iconv-lite: 0.6.3
 
+  whatwg-fetch@3.6.20: {}
+
   whatwg-mimetype@4.0.0: {}
->>>>>>> Stashed changes
 
   whatwg-url@5.0.0:
     dependencies:

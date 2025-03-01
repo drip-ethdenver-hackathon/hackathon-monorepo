@@ -321,8 +321,6 @@ export class CheckBalanceAgent extends BaseWalletAgent {
       if (args.erc20s && this.erc20Whitelist[chain.toLowerCase()]) {
         const whitelist = this.erc20Whitelist[chain.toLowerCase()];
 
-        console.log({ whitelist, args });
-        
         for (const tokenSymbol of args.erc20s) {
           if (whitelist[tokenSymbol]) {
             const tokenData = whitelist[tokenSymbol];

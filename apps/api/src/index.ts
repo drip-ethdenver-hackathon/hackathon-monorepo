@@ -16,6 +16,7 @@ import { chatMessageHandler } from "./routes/chatMessage";
 import { agentsHandler } from "./routes/agents";
 import { ScheduledBalanceAgent } from "./lib/agents/ScheduledBalanceAgent";
 import { SearchAgent } from "./lib/agents/SearchAgent";
+import { indexerRouter } from './routes/indexer';
 import { connectRouter } from "./routes/connect";
 
 dotenv.config();
@@ -90,14 +91,19 @@ app.get("/", (req, res) => {
   res.redirect("/index.html");
 });
 
-app.use("/incoming-call", incomingCallRouter);
-app.post(
-  "/chat-message",
-  chatMessageHandler(orchestrator, SYSTEM_MESSAGE, OPENAI_API_KEY)
-);
-app.use("/simulate-call", simulateCallRouter);
-app.use("/agents", agentsHandler(orchestrator));
-app.use("/connect", connectRouter);
+app.use('/incoming-call', incomingCallRouter);
+
+app.post('/chat-message', (req, res) => {
+  chatMessageHandler(orchestrator, SYSTEM_MESSAGE, OPENAI_API_KEY)(req, res);
+});
+
+app.use('/simulate-call', simulateCallRouter);
+
+app.use('/agents', agentsHandler(orchestrator));
+
+app.use('/connect', connectRouter);
+
+app.use('/index-docs', indexerRouter);
 
 const server = http.createServer(app);
 

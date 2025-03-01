@@ -103,5 +103,5 @@ simulateCallRouter.post('/', async (req: Request, res: Response) => {
   });
 
   // 4) Return logs
-  return res.json({ success: true, logs });
+  res.json({ success: true, logs });
 });

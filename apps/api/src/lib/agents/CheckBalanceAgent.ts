@@ -15,7 +15,7 @@ export class CheckBalanceAgent extends BaseWalletAgent {
   private cacheDurationMs = 5 * 60_1000;
 
   private chainToCoinSymbol: Record<string, string> = {
-    ethereum: "ethereum",
+    ethereum: "ethereum", 
     arbitrum: "ethereum",
     optimism: "ethereum",
     abstract: "ethereum",

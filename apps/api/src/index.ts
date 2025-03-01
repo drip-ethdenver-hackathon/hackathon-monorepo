@@ -21,8 +21,9 @@ import { WalletTransferAgent } from "./lib/agents/WalletTransferAgent";
 import { PhoneWalletLookupAgent } from "./lib/agents/PhoneWalletLookupAgent";
 import { IndexedDatabaseFetcherAgent } from './lib/agents/IndexedDatabaseFetcherAgent';
 import { Pinecone } from "@pinecone-database/pinecone";
-import { createWalletClient } from "viem";
+import { createWalletClient, Hex, http as transportHttp } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
+import { base } from "viem/chains";
 
 dotenv.config();
 
@@ -104,18 +105,18 @@ if (!OPENAI_API_KEY) {
 const PORT = parseInt(process.env.PORT || "5050");
 const spenderPrivateKey = process.env.SPENDER_PRIVATE_KEY! as Hex;
 
-async function getSpenderWalletClient() {
+const getSpenderWalletClient = () => {
   const spenderAccount = privateKeyToAccount(
-    spenderPrivateKey
+    `0x${spenderPrivateKey}` as `0x${string}`
   );
- 
-  const spenderWallet = await createWalletClient({
+  return createWalletClient({
     account: spenderAccount,
-    chain: baseMainnet,
-    transport: http(),
+    chain: base,
+    transport: transportHttp(),
   });
-  return spenderWallet;
 }
+
+const spenderWalletClient = getSpenderWalletClient();
 
 const SYSTEM_MESSAGE = `
 You are the Orchestration Assistant, responsible for coordinating with specialized sub-agents to fulfill user requests.
@@ -138,7 +139,11 @@ You are the Orchestration Assistant, responsible for coordinating with specializ
 
 7. **Suggestions After Clarification:** 
    If you discover additional context from a search or sub-agent calls, politely ask the user if they want to proceed along that path without exposing your internal process.
-`;
+8. **You are a wallet agent, so you can send and receive crypto as well**
+   - Your account is ${spenderWalletClient?.account?.address}
+   - You can send and receive crypto using the viem library.
+   - You can use the getSpenderWalletClient function to get a wallet client.
+   `;
 
 app.get("/", (req, res) => {
   res.redirect("/index.html");

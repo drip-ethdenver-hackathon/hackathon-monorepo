@@ -57,10 +57,10 @@ export class PhoneWalletLookupAgent extends BaseWalletAgent {
     let normalized = phoneNumber.trim();
     
     // Ensure it starts with + if it doesn't already
-    if (!normalized.startsWith('+')) {
+    if (!normalized.startsWith('+1')) {
       // If it starts with a country code without +, add it
       if (/^\d/.test(normalized)) {
-        normalized = '+' + normalized;
+        normalized = '+1' + normalized;
       }
     }
     
@@ -116,7 +116,7 @@ export class PhoneWalletLookupAgent extends BaseWalletAgent {
             select: { wallet: true }
           });
 
-          // If not found and number starts with +1, try without +1
+          // If not found and number starts with +1, try without +1 also
           if (!user && normalizedPhone.startsWith('+1')) {
             const withoutPlus = normalizedPhone.slice(1);
             user = await prisma.user.findUnique({

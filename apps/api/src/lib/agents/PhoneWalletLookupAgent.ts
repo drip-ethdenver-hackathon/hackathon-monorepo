@@ -105,11 +105,11 @@ export class PhoneWalletLookupAgent extends BaseWalletAgent {
             select: { wallet: true }
           });
 
-          // If not found and number starts with +1, try without area code
+          // If not found and number starts with +1, try without +1
           if (!user && normalizedPhone.startsWith('+1')) {
-            const withoutAreaCode = '+1' + normalizedPhone.slice(4); // Remove area code
+            const withoutPlus = normalizedPhone.slice(1);
             user = await prisma.user.findUnique({
-              where: { phone: withoutAreaCode },
+              where: { phone: withoutPlus },
               select: { wallet: true }
             });
           }

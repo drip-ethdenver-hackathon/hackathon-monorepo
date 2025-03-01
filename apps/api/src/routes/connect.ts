@@ -10,7 +10,7 @@ const router = Router();
 // Initialize Privy client with your API key
 const privy = new PrivyClient(process.env.PRIVY_APP_ID || '', process.env.PRIVY_SECRET_KEY || '');
 
-
+// @ts-ignore
 router.post('/', async (req: Request, res: Response) => {
   try {
     // Extract token from Authorization header

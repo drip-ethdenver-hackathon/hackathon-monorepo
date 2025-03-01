@@ -1,6 +1,6 @@
 import { Agent } from '../framework/Agent';
 import { prisma } from '@repo/database';
-import { createPublicClient, http, formatUnits, erc20abi } from 'viem';
+import { createPublicClient, http, formatUnits, erc20Abi } from 'viem';
 import { base } from 'viem/chains';
 
 // Common Base tokens
@@ -83,7 +83,7 @@ export class CheckBalanceAgent implements Agent {
 
     const balance = await this.client.readContract({
       address: token.address as `0x${string}`,
-      abi: erc20abi,
+      abi: erc20Abi,
       functionName: 'balanceOf',
       args: [address as `0x${string}`]
     });

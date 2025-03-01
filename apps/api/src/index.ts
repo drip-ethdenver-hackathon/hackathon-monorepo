@@ -18,6 +18,7 @@ import { ScheduledBalanceAgent } from './lib/agents/ScheduledBalanceAgent';
 import { SearchAgent } from './lib/agents/SearchAgent';
 import { indexerRouter } from './routes/indexer';
 import { connectRouter } from './routes/connect';
+import { PagesIndexAgent } from './lib/agents/PagesIndexAgent';
 
 dotenv.config();
 
@@ -42,6 +43,7 @@ const orchestrator = new Orchestrator();
 // orchestrator.registerAgent(new CheckBalanceAgent());
 // orchestrator.registerAgent(new ScheduledBalanceAgent());
 orchestrator.registerAgent(new SearchAgent(process.env.ORA_API_KEY || '', 'deepseek-ai/DeepSeek-V3'));
+orchestrator.registerAgent(new PagesIndexAgent());
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 

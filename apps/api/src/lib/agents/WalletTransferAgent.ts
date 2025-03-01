@@ -82,18 +82,87 @@ export class WalletTransferAgent extends BaseWalletAgent {
         where: { agentName }
       });
 
+      console.log('agentName', agentName);
+      console.log('wallet', wallet);
+
       if (!wallet) {
         throw new Error(`No wallet found for agent: ${agentName}`);
+      }
+
+      // Parse the wallet data - it's stored as a JSON string
+      let walletData;
+      try {
+        walletData = JSON.parse(wallet.walletData);
+      } catch (err) {
+        throw new Error(`Invalid wallet data format for agent ${agentName}: ${String(err)}`);
       }
 
       return {
         address: wallet.address,
         walletType: wallet.walletType,
-        walletData: JSON.parse(wallet.walletData),
-        networkId: wallet.networkId
+        walletData: walletData,
+        networkId: wallet.networkId || walletData.networkId // Use networkId from walletData if not set in the wallet record
       };
     } catch (err) {
       throw new Error(`Failed to get wallet info for agent ${agentName}: ${String(err)}`);
+    }
+  }
+
+  /**
+   * Get the wallet address for an agent
+   * This will use AgentKit to derive the address if it's not stored in the database
+   */
+  private async getWalletAddress(walletInfo: any): Promise<string> {
+    // If we already have an address, return it
+    if (walletInfo.address) {
+      return walletInfo.address;
+    }
+    
+    // Otherwise, we need to temporarily configure this agent with the wallet
+    // to get its address
+    const originalConfig = this.walletConfig;
+    const originalProvider = this.walletProvider;
+    const originalClient = this.agentKitClient;
+    
+    try {
+      // Create a temporary wallet config
+      const tempConfig: WalletConfig = {
+        type: walletInfo.walletType.toLowerCase() as WalletType,
+        networkId: walletInfo.networkId
+      };
+      
+      // Add type-specific data
+      if (tempConfig.type === WalletType.CDP) {
+        tempConfig.cdpWalletData = JSON.stringify(walletInfo.walletData);
+      } else if ([WalletType.VIEM, WalletType.SOLANA, WalletType.SMART].includes(tempConfig.type)) {
+        if (walletInfo.walletData.privateKey) {
+          tempConfig.privateKey = walletInfo.walletData.privateKey;
+        } else if (walletInfo.walletData.seed) {
+          tempConfig.privateKey = walletInfo.walletData.seed;
+        }
+      }
+      
+      // Update the wallet config
+      this.walletConfig = tempConfig;
+      this.walletProvider = null;
+      this.agentKitClient = null;
+      
+      // Initialize AgentKit with this wallet
+      await this.initializeAgentKit();
+      
+      // Get the wallet details to extract the address
+      const details = await this.getNativeBalance();
+      
+      if (!details.success || !details.address) {
+        throw new Error("Failed to get wallet address");
+      }
+      
+      return details.address;
+    } finally {
+      // Restore the original configuration
+      this.walletConfig = originalConfig;
+      this.walletProvider = originalProvider;
+      this.agentKitClient = originalClient;
     }
   }
 
@@ -104,59 +173,86 @@ export class WalletTransferAgent extends BaseWalletAgent {
   async handleTask(args: any): Promise<any> {
     const { fromAgentName, toAgentName, amount, tokenType = "native", tokenAddress } = args;
 
-    // Validate input parameters
+    // Validate required parameters
+    if (!fromAgentName) {
+      return { success: false, message: "Source agent name (fromAgentName) is required" };
+    }
+    if (!toAgentName) {
+      return { success: false, message: "Destination agent name (toAgentName) is required" };
+    }
+    if (!amount) {
+      return { success: false, message: "Amount to transfer is required" };
+    }
     if (tokenType === "erc20" && !tokenAddress) {
-      this.recentAction = "Missing token address for ERC20 transfer";
-      return {
-        success: false,
-        message: "Token address is required for ERC20 transfers"
-      };
+      return { success: false, message: "Token address is required for ERC20 transfers" };
     }
 
     try {
       // Step 1: Look up wallet information for both agents
-      this.recentAction = `Looking up wallet information for agents: ${fromAgentName} and ${toAgentName}`;
+      this.recentAction = `Looking up wallet information for ${fromAgentName} and ${toAgentName}`;
       
-      const [fromWalletInfo, toWalletInfo] = await Promise.all([
-        this.getAgentWalletInfo(fromAgentName),
-        this.getAgentWalletInfo(toAgentName)
-      ]);
+      const fromWalletInfo = await this.getAgentWalletInfo(fromAgentName);
+      const toWalletInfo = await this.getAgentWalletInfo(toAgentName);
+      
+      console.log('Source wallet info:', fromWalletInfo);
+      console.log('Destination wallet info:', toWalletInfo);
+      
+      // Step 2: Create a new AgentKit client directly from the seed
+      this.recentAction = `Creating AgentKit client for ${fromAgentName}`;
+      
+      // Import AgentKit
+      const { AgentKit } = await import("@coinbase/agentkit");
+      
+      // Create a CdpWalletProvider directly instead of using AgentKit.from
+      const { CdpWalletProvider } = await import("@coinbase/agentkit");
 
-      if (!toWalletInfo.address) {
-        throw new Error(`Destination agent ${toAgentName} has no wallet address`);
+      // For source wallet
+      const sourceWalletProvider = await CdpWalletProvider.configureWithWallet({
+        apiKeyName: this.cdpApiKeyName,
+        apiKeyPrivateKey: this.cdpApiKeyPrivateKey,
+        networkId: fromWalletInfo.walletData.networkId,
+        cdpWalletData: JSON.stringify(fromWalletInfo.walletData)
+      });
+
+      // Then create the AgentKit instance with this provider
+      const sourceAgentKit = await AgentKit.from({
+        cdpApiKeyName: this.cdpApiKeyName,
+        cdpApiKeyPrivateKey: this.cdpApiKeyPrivateKey,
+        walletProvider: sourceWalletProvider
+      });
+      
+      // Step 3: Get the destination address
+      let destinationAddress = toWalletInfo.address;
+      if (!destinationAddress) {
+        this.recentAction = "Looking up destination wallet address";
+        
+        // Create a temporary wallet provider for the destination wallet
+        const destWalletProvider = await CdpWalletProvider.configureWithWallet({
+          apiKeyName: this.cdpApiKeyName,
+          apiKeyPrivateKey: this.cdpApiKeyPrivateKey,
+          networkId: toWalletInfo.walletData.networkId,
+          cdpWalletData: JSON.stringify(toWalletInfo.walletData)
+        });
+        
+        // Get the wallet address directly from the provider
+        destinationAddress = await destWalletProvider.getAddress();
+        
+        if (!destinationAddress) {
+          throw new Error(`Could not determine address for destination agent ${toAgentName}`);
+        }
+        
+        console.log('Retrieved destination address:', destinationAddress);
       }
 
-      // Step 2: Initialize AgentKit with the source agent's wallet
-      this.recentAction = `Initializing wallet for source agent: ${fromAgentName}`;
-      
-      // Create wallet config from the source agent's wallet data
-      const walletConfig: WalletConfig = {
-        type: fromWalletInfo.walletType.toLowerCase() as WalletType,
-        networkId: fromWalletInfo.networkId || undefined
-      };
+      console.log('Destination address:', destinationAddress);
 
-      // Add type-specific data
-      if (walletConfig.type === WalletType.CDP) {
-        walletConfig.cdpWalletData = JSON.stringify(fromWalletInfo.walletData);
-      } else if ([WalletType.VIEM, WalletType.SOLANA, WalletType.SMART].includes(walletConfig.type)) {
-        walletConfig.privateKey = fromWalletInfo.walletData.privateKey;
-      }
-
-      // Update the wallet config
-      this.walletConfig = walletConfig;
-      
-      // Reset wallet provider to force reinitialization with the new config
-      this.walletProvider = null;
-      this.agentKitClient = null;
-
-      // Initialize AgentKit with the source agent's wallet
-      await this.initializeAgentKit();
-
-      // Step 3: Perform the transfer
+      // Step 4: Perform the transfer
       this.recentAction = `Transferring ${amount} ${tokenType === "native" ? "native tokens" : "ERC20 tokens"} from ${fromAgentName} to ${toAgentName}`;
       
       // Find the appropriate action based on token type
-      const actions = this.agentKitClient!.getActions();
+      const actions = sourceAgentKit.getActions();
+      console.log('Available actions:', actions.map(a => a.name));
+      
       const actionName = tokenType === "native" 
         ? "WalletActionProvider_native_transfer" 
         : "ERC20ActionProvider_transfer";
@@ -169,9 +265,11 @@ export class WalletTransferAgent extends BaseWalletAgent {
       
       // Prepare action parameters
       const actionParams: any = {
-        to: toWalletInfo.address,
+        to: destinationAddress,
         value: amount
       };
+      
+      console.log('Action parameters:', actionParams);
       
       // Add ERC20-specific parameters
       if (tokenType === "erc20") {
@@ -180,6 +278,8 @@ export class WalletTransferAgent extends BaseWalletAgent {
       
       // Execute the transfer
       const response = await transferAction.invoke(actionParams);
+      
+      console.log('Transfer response:', response);
       
       this.recentAction = `Successfully transferred ${amount} from ${fromAgentName} to ${toAgentName}`;
       
@@ -190,6 +290,7 @@ export class WalletTransferAgent extends BaseWalletAgent {
       };
     } catch (err: any) {
       this.recentAction = `Transfer failed: ${String(err)}`;
+      console.error('Transfer error:', err);
       
       return {
         success: false,

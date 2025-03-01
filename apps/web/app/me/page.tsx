@@ -70,8 +70,8 @@ export default function ProfilePage() {
               <div className="flex justify-between items-center">
                 <span>Wallet</span>
                 <span className="font-medium">
-                  {user?.wallet?.address 
-                    ? `${user.wallet.address.substring(0, 6)}...${user.wallet.address.substring(user.wallet.address.length - 4)}` 
+                  {user?.smartWallet?.address 
+                    ? `${user.smartWallet.address.substring(0, 6)}...${user.smartWallet.address.substring(user.smartWallet.address.length - 4)}` 
                     : "Not connected"}
                 </span>
               </div>

@@ -35,8 +35,8 @@ export default function CryptoPage() {
   // Get the user's wallet address when component mounts
   React.useEffect(() => {
     const fetchWalletAddress = async () => {
-      if (user?.wallet?.address) {
-        setWalletAddress(user.wallet.address);
+      if (user?.smartWallet?.address) {
+        setWalletAddress(user.smartWallet.address);
       } else if (user?.linkedAccounts) {
         // Find the first wallet in linked accounts
         const walletAccount = user.linkedAccounts.find(

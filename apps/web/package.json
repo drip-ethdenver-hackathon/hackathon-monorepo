@@ -15,8 +15,10 @@
     "@repo/tailwind-config": "workspace:*",
     "@repo/ui": "workspace:*",
     "next": "^15.1.6",
+    "permissionless": "^0.2.35",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "viem": "^2.23.5"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",

@@ -14,6 +14,7 @@ export default function PhoneLoginCard() {
   const [touched, setTouched] = useState(false);
   const [verificationCode, setVerificationCode] = useState("");
   const [showVerification, setShowVerification] = useState(false);
+  const [consentGiven, setConsentGiven] = useState(false);
 
   const {createWallet} = useCreateWallet();
 
@@ -110,7 +111,7 @@ export default function PhoneLoginCard() {
   const isPhoneValid = phone.replace(/\D/g, "").length === 10;
   const isCodeValid = verificationCode.length === 6;
 
-  const isLoading = state === "LOADING";
+  const isLoading = state.type === "LOADING";
 
   return (
     <div className="w-full max-w-md mx-auto p-4">
@@ -129,19 +130,34 @@ export default function PhoneLoginCard() {
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
         {!showVerification ? (
-          <PhoneInput
-            value={phone}
-            onChange={setPhone}
-            onBlur={handleBlur}
-            isRequired
-            validateOnBlur
-            isDisabled={isLoading}
-            errorMessage={
-              touched && phone && !isPhoneValid
-                ? "Please enter a valid phone number"
-                : undefined
-            }
-          />
+          <>
+            <PhoneInput
+              value={phone}
+              onChange={setPhone}
+              onBlur={handleBlur}
+              isRequired
+              validateOnBlur
+              isDisabled={isLoading}
+              errorMessage={
+                touched && phone && !isPhoneValid
+                  ? "Please enter a valid phone number"
+                  : undefined
+              }
+            />
+            <div className="flex items-start gap-2">
+              <input
+                type="checkbox"
+                id="consent"
+                className="mt-1"
+                checked={consentGiven}
+                onChange={(e) => setConsentGiven(e.target.checked)}
+                required
+              />
+              <label htmlFor="consent" className="text-sm text-default-600">
+                I consent to receive important messages via SMS, including verification codes and account notifications.
+              </label>
+            </div>
+          </>
         ) : (
           <Input
             type="text"
@@ -160,7 +176,7 @@ export default function PhoneLoginCard() {
           className="w-full h-12"
           color="primary"
           size="lg"
-          isDisabled={(!showVerification && !isPhoneValid) || 
+          isDisabled={(!showVerification && (!isPhoneValid || !consentGiven)) || 
                      (showVerification && !isCodeValid) ||
                      isLoading}
           isLoading={isLoading}

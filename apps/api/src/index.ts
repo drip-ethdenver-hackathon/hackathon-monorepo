@@ -20,6 +20,7 @@ import { PagesIndexAgent } from "./lib/agents/PagesIndexAgent";
 import { WalletTransferAgent } from "./lib/agents/WalletTransferAgent";
 import { PhoneWalletLookupAgent } from "./lib/agents/PhoneWalletLookupAgent";
 import { IndexedDatabaseFetcherAgent } from './lib/agents/IndexedDatabaseFetcherAgent';
+import { TransferAgent } from "./lib/agents/TransferAgent";
 import { Pinecone } from "@pinecone-database/pinecone";
 import { createWalletClient, Hex } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
@@ -50,6 +51,8 @@ const orchestrator = new Orchestrator();
 const pineconeClient = new Pinecone({
   apiKey: process.env.PINECONE_API_KEY || "",
 });
+
+orchestrator.registerAgent(new TransferAgent());
 
 orchestrator.registerAgent(
   new SearchAgent(process.env.ORA_API_KEY || "", "deepseek-ai/DeepSeek-V3")

@@ -8,6 +8,8 @@ import { BaseWalletAgent } from './BaseWalletAgent';
 export class PhoneWalletLookupAgent extends BaseWalletAgent {
   public recentAction: string = 'No recent action.';
 
+  public environment: any;
+
   getName(): string {
     return 'phone_wallet_lookup';
   }
@@ -16,18 +18,22 @@ export class PhoneWalletLookupAgent extends BaseWalletAgent {
     return 'Looks up wallet addresses from phone numbers and vice versa based on user registration data.';
   }
 
+  async initializeEnvironment(envData: any): Promise<void>  {
+    this.environment = envData;
+  }
+
   getParametersJsonSchema(): object {
     return {
       type: 'object',
       properties: {
         lookupType: {
           type: 'string',
-          enum: ['phone_to_wallet', 'wallet_to_phone', 'check_registration'],
+          enum: ['phone_to_wallet', 'wallet_to_phone', 'check_registration', 'env'],
           description: 'The type of lookup to perform'
         },
         phoneNumber: {
           type: 'string',
-          description: 'The phone number to look up (required for phone_to_wallet or check_registration)'
+          description: 'The phone number to look up (required for phone_to_wallet or check_registration) or "env" to use the environment phone number'
         },
         walletAddress: {
           type: 'string',
@@ -65,7 +71,7 @@ export class PhoneWalletLookupAgent extends BaseWalletAgent {
   }
 
   async handleTask(args: any): Promise<any> {
-    const { lookupType, phoneNumber, walletAddress } = args;
+    let { lookupType, phoneNumber, walletAddress } = args;
 
     try {
       // Validate required parameters based on lookup type
@@ -93,16 +99,31 @@ export class PhoneWalletLookupAgent extends BaseWalletAgent {
         };
       }
 
+      if (lookupType === 'env') {
+        phoneNumber = this.environment?.phoneNumber || '';
+      }
+
       // Perform the requested lookup
       switch (lookupType) {
-        case 'phone_to_wallet': {
+        case 'phone_to_wallet':
+        case 'env': {
           const normalizedPhone = this.normalizePhoneNumber(phoneNumber);
           this.recentAction = `Looking up wallet for phone: ${normalizedPhone}`;
           
-          const user = await prisma.user.findUnique({
+          // Try with full number first
+          let user = await prisma.user.findUnique({
             where: { phone: normalizedPhone },
             select: { wallet: true }
           });
+
+          // If not found and number starts with +1, try without +1
+          if (!user && normalizedPhone.startsWith('+1')) {
+            const withoutPlus = normalizedPhone.slice(1);
+            user = await prisma.user.findUnique({
+              where: { phone: withoutPlus },
+              select: { wallet: true }
+            });
+          }
           
           if (!user) {
             return {
@@ -117,8 +138,7 @@ export class PhoneWalletLookupAgent extends BaseWalletAgent {
             found: true,
             wallet: user.wallet
           };
-        }
-        
+        }        
         case 'wallet_to_phone': {
           const normalizedWallet = walletAddress.toLowerCase();
           this.recentAction = `Looking up phone for wallet: ${normalizedWallet}`;

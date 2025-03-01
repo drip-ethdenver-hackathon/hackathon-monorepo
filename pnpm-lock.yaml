@@ -80,6 +80,9 @@ importers:
       jade:
         specifier: ^1.11.0
         version: 1.11.0
+      jsonwebtoken:
+        specifier: ^9.0.2
+        version: 9.0.2
       morgan:
         specifier: ^1.10.0
         version: 1.10.0

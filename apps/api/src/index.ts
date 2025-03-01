@@ -21,9 +21,11 @@ import { WalletTransferAgent } from "./lib/agents/WalletTransferAgent";
 import { PhoneWalletLookupAgent } from "./lib/agents/PhoneWalletLookupAgent";
 import { IndexedDatabaseFetcherAgent } from './lib/agents/IndexedDatabaseFetcherAgent';
 import { Pinecone } from "@pinecone-database/pinecone";
-import { createWalletClient, Hex, http as transportHttp } from "viem";
+import { createWalletClient, Hex } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { base } from "viem/chains";
+import { http as viemHttp } from "viem";
+import { CoinbaseOnrampAgent } from "./lib/agents/CoinbaseOnrampAgent";
 
 dotenv.config();
 
@@ -85,6 +87,10 @@ orchestrator.registerAgent(
   new SearchAgent(process.env.CDP_API_KEY_NAME || '', process.env.CDP_API_KEY_PRIVATE || '')
 );
 
+orchestrator.registerAgent(
+  new CoinbaseOnrampAgent(process.env.CDP_API_KEY_NAME || '', process.env.CDP_API_KEY_PRIVATE || '')
+);
+
 // After registering, initialize the environment with the Pinecone client
 orchestrator.listAgents().forEach(async (agent) => {
   if (agent.getName() === 'agent_breeder') {
@@ -112,14 +118,14 @@ const getSpenderWalletClient = () => {
   return createWalletClient({
     account: spenderAccount,
     chain: base,
-    transport: transportHttp(),
+    transport: viemHttp(),
   });
 }
 
 const spenderWalletClient = getSpenderWalletClient();
 
 const SYSTEM_MESSAGE = `
-You are the Orchestration Assistant, responsible for coordinating with specialized sub-agents to fulfill user requests.
+You are the Orchestration Assistant, responsible for coordinating with specialized sub-agents to fulfill user requests. When you need the user's wallet address, use the PhoneWalletLookupAgent using the env lookup type.
 
 1. **Discover & Call Agents:** You have access to multiple registered agents (tools/functions) that handle tasks such as sending crypto, exchanging tokens, checking balances, or performing lookups. When you need specific functionality, call the relevant agent by name, providing correct JSON arguments according to its schema. Do not alter the user's input in ways that change the intended context.
 

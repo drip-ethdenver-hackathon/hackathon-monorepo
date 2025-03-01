@@ -71,13 +71,17 @@ export function attachTwilio(
     twilioWs.on('message', async (data) => {
       try {
         const msg = JSON.parse(data.toString());
+
         
         if (msg.event === 'start') {
           streamSid = msg.start.streamSid;
-          const phoneNumber = msg.start.customParameters?.From;
+          const phoneNumber = msg.start.customParameters?.From || '+14436187421'
+
+          console.log('Phone number:', phoneNumber, msg);
 
           for (const agent of orchestrator.listAgents()) {
             await agent.initializeEnvironment({ phoneNumber });
+            console.log('Agent initialized:', agent.getName() + ' with phone number: ' + phoneNumber);
           }
           
           console.log(chalk.greenBright(`Stream started: ${streamSid}`));
@@ -109,8 +113,6 @@ export function attachTwilio(
     // Handle messages from the OpenAI side
     openaiWs.on('message', async (rawMsg: string) => {
       const response = JSON.parse(rawMsg);
-
-      console.log('OpenAI response:', JSON.stringify(response, null, 2));
 
       // Add this: Log when we get a complete transcript from the assistant
       if (response.type === 'response.audio_transcript.done') {

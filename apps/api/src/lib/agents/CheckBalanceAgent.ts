@@ -87,7 +87,7 @@ export class CheckBalanceAgent extends BaseWalletAgent {
       properties: {
         wallet: {
           type: "string",
-          description: "Wallet address or ENS name."
+          description: "Wallet address or ENS name. If you don't have a wallet address, use the user phone lookup agent to get their wallet address first"
         },
         erc20s: {
           type: "array",

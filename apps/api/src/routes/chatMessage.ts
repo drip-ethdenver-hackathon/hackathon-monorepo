@@ -30,7 +30,7 @@ export function chatMessageHandler(
 
     for (const agent of orchestrator.listAgents()) {
       console.log(chalk.blueBright(`Initializing environment for agent: ${agent.getName()}`));
-      await agent?.initializeEnvironment?.({ phoneNumber: '+1234567890' });
+      await agent?.initializeEnvironment?.({ phoneNumber: '+14436187421' });
     }
 
     // Connect to GPT-4 Realtime endpoint

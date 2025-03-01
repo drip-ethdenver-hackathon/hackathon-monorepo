@@ -604,6 +604,16 @@ export abstract class BaseWalletAgent implements Agent {
   }
 
   /**
+   * Get the wallet address (convenience property)
+   * @returns The current wallet address as a string, or null if unavailable
+   */
+  get address(): Promise<string | null> {
+    return this.getAgentNativeBalance()
+      .then(result => result.success ? result.address : null)
+      .catch(() => null);
+  }
+
+  /**
    * Returns any relevant context or the most recent action for this agent,
    * useful for debugging or agent introspection.
    */

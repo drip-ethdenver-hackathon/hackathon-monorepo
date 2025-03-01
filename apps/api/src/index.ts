@@ -165,6 +165,7 @@ agentStreamServer.on("connection", async (ws) => {
         contextInfo: agent.getContextInfo(),
         status: orchestrator.getAgentStatus(agent.getName()) || "IDLE",
         balance: null,
+        address: null,
       };
 
       // Check if agent is a BaseWalletAgent and get balance
@@ -174,6 +175,7 @@ agentStreamServer.on("connection", async (ws) => {
       ) {
         try {
           info.balance = await (agent as any).balance;
+          info.address = await (agent as any).address;
         } catch (err) {
           console.log(`Error getting balance for ${agent.getName()}: ${err}`);
         }

@@ -427,6 +427,41 @@
           contentDiv.appendChild(balanceElement);
         }
         
+        // Add address if available
+        if (agent.address) {
+          const addressElement = document.createElement('div');
+          addressElement.style.marginTop = '5px';
+          addressElement.style.fontSize = '0.8em';
+          addressElement.style.fontWeight = 'normal';
+          addressElement.style.cursor = 'pointer';
+          
+          // Format address to show only first 6 and last 4 characters
+          const shortAddress = `${agent.address.substring(0, 6)}...${agent.address.substring(agent.address.length - 4)}`;
+          addressElement.textContent = shortAddress;
+          
+          // Add tooltip
+          addressElement.title = "Click to copy full address";
+          
+          // Add click handler to copy address
+          addressElement.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent opening the agent modal
+            navigator.clipboard.writeText(agent.address)
+              .then(() => {
+                // Show temporary "copied" message
+                const originalText = addressElement.textContent;
+                addressElement.textContent = "Copied!";
+                setTimeout(() => {
+                  addressElement.textContent = originalText;
+                }, 1000);
+              })
+              .catch(err => {
+                console.error('Failed to copy address: ', err);
+              });
+          });
+          
+          contentDiv.appendChild(addressElement);
+        }
+        
         // Add the content div to the box
         box.appendChild(contentDiv);
         
@@ -441,9 +476,28 @@
         <p><strong>Name:</strong> ${agent.name}</p>
         <p><strong>Status:</strong> ${agent.status || 'IDLE'}</p>
         ${agent.balance ? `<p><strong>Balance:</strong> ${agent.balance}</p>` : ''}
+        ${agent.address ? `<p><strong>Address:</strong> <span class="copyable-address" title="Click to copy" style="cursor:pointer">${agent.address}</span></p>` : ''}
         <p><strong>Description:</strong> ${agent.description || 'No description'}</p>
         <p><strong>Context:</strong> ${agent.contextInfo || 'No context'}</p>
       `;
+      
+      // Add click handler for the copyable address in the modal
+      const copyableAddress = agentInfoDiv.querySelector('.copyable-address');
+      if (copyableAddress) {
+        copyableAddress.addEventListener('click', function() {
+          navigator.clipboard.writeText(this.textContent)
+            .then(() => {
+              const originalText = this.textContent;
+              this.textContent = "Copied!";
+              setTimeout(() => {
+                this.textContent = originalText;
+              }, 1000);
+            })
+            .catch(err => {
+              console.error('Failed to copy address: ', err);
+            });
+        });
+      }
     }
 
     agentModalClose.addEventListener('click', () => {

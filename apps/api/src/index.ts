@@ -16,7 +16,6 @@ import { chatMessageHandler } from './routes/chatMessage';
 import { agentsHandler } from './routes/agents';
 import { ScheduledBalanceAgent } from './lib/agents/ScheduledBalanceAgent';
 import { SearchAgent } from './lib/agents/SearchAgent';
-import { connectRouter } from './routes/connect';
 import { AgentKitBasedAgent } from './lib/agents/CDP_AgentKit';
 import { indexerRouter } from './routes/indexer';
 import { connectRouter } from './routes/connect';

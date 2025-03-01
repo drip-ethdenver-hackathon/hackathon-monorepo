@@ -122,6 +122,14 @@ export function attachTwilio(
         });
       }
 
+      if (response.type === 'conversation.item.input_audio_transcription.completed') {
+        orchestrator.emitEvent({
+          type: 'message',
+          role: 'user',
+          content: response.transcript,
+          timestamp: new Date().toISOString()
+        });
+      }
       // Forward assistant audio to Twilio
       if (
         response.type === 'response.audio.delta' &&

@@ -25,7 +25,7 @@ export function chatMessageHandler(
     }
 
     console.log(chalk.blueBright(`Received user message: "${message}"`));
-    // Append user's message to local conversation store
+
     conversation.push({ role: "user", content: message });
 
     for (const agent of orchestrator.listAgents()) {
@@ -117,7 +117,7 @@ export function chatMessageHandler(
     openaiWs.on("message", async (data) => {
       try {
         const msg = JSON.parse(data.toString());
-        console.log(chalk.gray("WS message from GPT:"), msg.type);
+        // console.log(chalk.gray("WS message from GPT:"), msg.type);
 
         if (msg.type === "error") {
           console.log({ msg });
@@ -134,10 +134,9 @@ export function chatMessageHandler(
           );
         }
 
-        // If GPT is streaming partial text
         if (msg.type === "response.text.delta" && msg.delta) {
           textBuffer += msg.delta;
-          console.log(chalk.cyanBright("Text delta:"), msg.delta);
+        //   console.log(chalk.cyanBright("Text delta:"), msg.delta);
         }
 
         // Once GPT is done with this response

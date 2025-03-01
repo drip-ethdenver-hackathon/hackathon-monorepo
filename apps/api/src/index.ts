@@ -1,27 +1,24 @@
-import express from 'express';
-import dotenv from 'dotenv';
-import http from 'http';
-import WebSocket from 'ws';
-import chalk from 'chalk';
-import cors from 'cors';
-import { incomingCallRouter } from './routes/incomingCall';
-import { simulateCallRouter } from './routes/simulateCall';
-import { Orchestrator } from './lib/framework/Orchestrator';
-import { SendCryptoAgent } from './lib/agents/SendCryptoAgent';
-import { ExchangeTokensAgent } from './lib/agents/ExchangeTokensAgent';
-import { CheckBalanceAgent } from './lib/agents/CheckBalanceAgent';
-import { attachTwilio } from './lib/ws/twilio';
-import { attachOrchestrator } from './lib/ws/orchestrator';
-import { chatMessageHandler } from './routes/chatMessage';
-import { agentsHandler } from './routes/agents';
-import { ScheduledBalanceAgent } from './lib/agents/ScheduledBalanceAgent';
-import { SearchAgent } from './lib/agents/SearchAgent';
-import { AgentKitBasedAgent } from './lib/agents/CDP_AgentKit';
-import { indexerRouter } from './routes/indexer';
-import { connectRouter } from './routes/connect';
-import { PagesIndexAgent } from './lib/agents/PagesIndexAgent';
-import { WalletTransferAgent } from './lib/agents/WalletTransferAgent';
-import { PhoneWalletLookupAgent } from './lib/agents/PhoneWalletLookupAgent';
+import express from "express";
+import dotenv from "dotenv";
+import http from "http";
+import WebSocket from "ws";
+import chalk from "chalk";
+import cors from "cors";
+import { incomingCallRouter } from "./routes/incomingCall";
+import { simulateCallRouter } from "./routes/simulateCall";
+import { Orchestrator } from "./lib/framework/Orchestrator";
+import { CheckBalanceAgent } from "./lib/agents/CheckBalanceAgent";
+import { attachTwilio } from "./lib/ws/twilio";
+import { attachOrchestrator } from "./lib/ws/orchestrator";
+import { chatMessageHandler } from "./routes/chatMessage";
+import { agentsHandler } from "./routes/agents";
+import { SearchAgent } from "./lib/agents/SearchAgent";
+import { AgentKitBasedAgent } from "./lib/agents/CDP_AgentKit";
+import { indexerRouter } from "./routes/indexer";
+import { connectRouter } from "./routes/connect";
+import { PagesIndexAgent } from "./lib/agents/PagesIndexAgent";
+import { WalletTransferAgent } from "./lib/agents/WalletTransferAgent";
+import { PhoneWalletLookupAgent } from "./lib/agents/PhoneWalletLookupAgent";
 
 dotenv.config();
 
@@ -43,16 +40,26 @@ app.use(
 
 const orchestrator = new Orchestrator();
 
-// Uncomment these to register additional agents as needed:
-// orchestrator.registerAgent(new SendCryptoAgent());
-// orchestrator.registerAgent(new ExchangeTokensAgent());
-// orchestrator.registerAgent(new ScheduledBalanceAgent());
-// orchestrator.registerAgent(new CheckBalanceAgent());
-// orchestrator.registerAgent(new ScheduledBalanceAgent());
-orchestrator.registerAgent(new SearchAgent(process.env.ORA_API_KEY || '', 'deepseek-ai/DeepSeek-V3'));
+orchestrator.registerAgent(
+  new SearchAgent(process.env.ORA_API_KEY || "", "deepseek-ai/DeepSeek-V3")
+);
+
 orchestrator.registerAgent(new PagesIndexAgent());
-orchestrator.registerAgent(new AgentKitBasedAgent(process.env.CDP_API_KEY_NAME || '', process.env.CDP_API_KEY_PRIVATE || ''));
-orchestrator.registerAgent(new WalletTransferAgent(process.env.CDP_API_KEY_NAME || '', process.env.CDP_API_KEY_PRIVATE || ''));
+
+orchestrator.registerAgent(
+  new AgentKitBasedAgent(
+    process.env.CDP_API_KEY_NAME || "",
+    process.env.CDP_API_KEY_PRIVATE || ""
+  )
+);
+
+orchestrator.registerAgent(
+  new WalletTransferAgent(
+    process.env.CDP_API_KEY_NAME || "",
+    process.env.CDP_API_KEY_PRIVATE || ""
+  )
+);
+
 orchestrator.registerAgent(new PhoneWalletLookupAgent());
 
 orchestrator.registerAgent(
@@ -101,19 +108,19 @@ app.get("/", (req, res) => {
   res.redirect("/index.html");
 });
 
-app.use('/incoming-call', incomingCallRouter);
+app.use("/incoming-call", incomingCallRouter);
 
-app.post('/chat-message', (req, res) => {
+app.post("/chat-message", (req, res) => {
   chatMessageHandler(orchestrator, SYSTEM_MESSAGE, OPENAI_API_KEY)(req, res);
 });
 
-app.use('/simulate-call', simulateCallRouter);
+app.use("/simulate-call", simulateCallRouter);
 
-app.use('/agents', agentsHandler(orchestrator));
+app.use("/agents", agentsHandler(orchestrator));
 
-app.use('/connect', connectRouter);
+app.use("/connect", connectRouter);
 
-app.use('/index-docs', indexerRouter);
+app.use("/index-docs", indexerRouter);
 
 const server = http.createServer(app);
 
@@ -129,30 +136,34 @@ const agentStreamClients = new Set<WebSocket>();
 agentStreamServer.on("connection", async (ws) => {
   console.log(chalk.greenBright("Agent stream client connected."));
   agentStreamClients.add(ws);
-  
+
   // Get the list of agents with enhanced information
-  const fullList = await Promise.all(orchestrator.listAgents().map(async (agent) => {
-    const info = {
-      name: agent.getName(),
-      description: agent.getDescription(),
-      contextInfo: agent.getContextInfo(),
-      status: orchestrator.getAgentStatus(agent.getName()) || "IDLE",
-      balance: null
-    };
-    
-    // Check if agent is a BaseWalletAgent and get balance
-    if (typeof (agent as any).balance === 'function' || 
-        typeof (agent as any).balance === 'object') {
-      try {
-        info.balance = await (agent as any).balance;
-      } catch (err) {
-        console.log(`Error getting balance for ${agent.getName()}: ${err}`);
+  const fullList = await Promise.all(
+    orchestrator.listAgents().map(async (agent) => {
+      const info = {
+        name: agent.getName(),
+        description: agent.getDescription(),
+        contextInfo: agent.getContextInfo(),
+        status: orchestrator.getAgentStatus(agent.getName()) || "IDLE",
+        balance: null,
+      };
+
+      // Check if agent is a BaseWalletAgent and get balance
+      if (
+        typeof (agent as any).balance === "function" ||
+        typeof (agent as any).balance === "object"
+      ) {
+        try {
+          info.balance = await (agent as any).balance;
+        } catch (err) {
+          console.log(`Error getting balance for ${agent.getName()}: ${err}`);
+        }
       }
-    }
-    
-    return info;
-  }));
-  
+
+      return info;
+    })
+  );
+
   ws.send(JSON.stringify({ type: "agent_full_list", agents: fullList }));
 
   ws.on("close", () => {

@@ -7,9 +7,13 @@ import { Button, Card, CardBody, CardFooter, CardHeader, Divider } from "@repo/u
 import BottomNavBar from "../../components/BottomNavbar";
 import Logo from "../../components/Logo";
 import AuthGuard from "../../components/auth/AuthGuard";
+import { useBalance, useReadContracts } from "wagmi";
+import { base } from "viem/chains";
+import { formatEther, parseEther } from "viem";
 
 export default function HomePage() {
   const { logout, user, getAccessToken } = usePrivy();
+
   const router = useRouter();
 
   const handleLogout = async () => {
@@ -41,6 +45,13 @@ export default function HomePage() {
     }
   };
 
+  const { data: balance, isLoading: isBalanceLoading } = useBalance({
+    address: user?.smartWallet?.address as `0x${string}`,
+    chainId: base.id,
+  });
+
+  console.log(balance);
+
   return (
     <AuthGuard>
       <div className="w-full max-w-md mx-auto p-4 pb-20 bg-white">
@@ -58,21 +69,16 @@ export default function HomePage() {
           <CardHeader className="flex gap-3">
             <div className="flex flex-col">
               <p className="text-md font-semibold">Account Overview</p>
-              <p className="text-small text-default-500">Your financial summary</p>
+              <p className="text-small text-default-500">{user?.smartWallet?.address}</p>
             </div>
           </CardHeader>
           <Divider />
           <CardBody>
-            <div className="flex justify-between mb-3">
-              <span>Available Balance</span>
-              <span className="font-semibold">$2,450.25</span>
-            </div>
             <div className="flex justify-between">
-              <span>Pending Transactions</span>
-              <span className="font-semibold">3</span>
+              <span>Available Balance</span>
+              <span className="font-semibold">{isBalanceLoading ? "..." : formatEther(balance?.value.toString() || "0")} ETH</span>
             </div>
           </CardBody>
-          <Divider />
           <CardFooter>
             <Button color="primary" size="sm" className="w-full">
               View Details
@@ -92,8 +98,8 @@ export default function HomePage() {
             <div className="grid grid-cols-2 gap-3">
               <Button color="primary" variant="flat">Send Money</Button>
               <Button color="primary" variant="flat">Request</Button>
-              <Button color="primary" variant="flat">Pay Bills</Button>
-              <Button color="primary" variant="flat">Top Up</Button>
+              <Button color="primary" variant="flat">Earn Yield</Button>
+              <Button color="primary" variant="flat">Get Help</Button>
             </div>
           </CardBody>
         </Card>

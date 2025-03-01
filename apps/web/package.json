@@ -12,13 +12,16 @@
   },
   "dependencies": {
     "@privy-io/react-auth": "^2.5.0",
+    "@privy-io/wagmi": "^1.0.3",
     "@repo/tailwind-config": "workspace:*",
     "@repo/ui": "workspace:*",
+    "@tanstack/react-query": "^5.56.2",
     "next": "^15.1.6",
     "permissionless": "^0.2.35",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "viem": "^2.23.5"
+    "viem": "^2.23.5",
+    "wagmi": "^2.14.9"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",

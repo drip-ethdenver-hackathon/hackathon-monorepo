@@ -41,14 +41,14 @@ export default function PayPage() {
                   <Input
                     type="text"
                     label="Recipient"
-                    placeholder="Email, phone, or username"
+                    placeholder="Phone number"
                     value={recipient}
                     onChange={(e) => setRecipient(e.target.value)}
                   />
                   <Input
                     type="text"
                     label="Amount"
-                    placeholder="$0.00"
+                    placeholder="0.00"
                     startContent={
                       <div className="pointer-events-none flex items-center">
                         <span className="text-default-400 text-small">$</span>
@@ -76,14 +76,14 @@ export default function PayPage() {
                   <Input
                     type="text"
                     label="From"
-                    placeholder="Email, phone, or username"
+                    placeholder="Phone number"
                     value={recipient}
                     onChange={(e) => setRecipient(e.target.value)}
                   />
                   <Input
                     type="text"
                     label="Amount"
-                    placeholder="$0.00"
+                    placeholder="0.00"
                     startContent={
                       <div className="pointer-events-none flex items-center">
                         <span className="text-default-400 text-small">$</span>

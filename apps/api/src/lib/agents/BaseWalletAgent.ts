@@ -16,7 +16,7 @@ import {
 } from "@coinbase/agentkit";
 import { cdpApiActionProvider, pythActionProvider, erc20ActionProvider, erc721ActionProvider } from "@coinbase/agentkit";
 import { PrismaClient } from "@repo/database";
-
+import { base } from "viem/chains";
 // Initialize Prisma client
 const prisma = new PrismaClient();
 
@@ -98,7 +98,7 @@ export abstract class BaseWalletAgent implements Agent {
       // Create the appropriate wallet config based on wallet type
       const config: WalletConfig = {
         type: wallet.walletType as WalletType,
-        networkId: wallet.networkId || undefined,
+        networkId: wallet.networkId || base.id,
       };
       
       // Add type-specific data

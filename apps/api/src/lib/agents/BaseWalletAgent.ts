@@ -98,7 +98,7 @@ export abstract class BaseWalletAgent implements Agent {
       // Create the appropriate wallet config based on wallet type
       const config: WalletConfig = {
         type: wallet.walletType as WalletType,
-        networkId: wallet.networkId || base.id,
+        networkId: wallet.networkId || base.id.toString(),
       };
       
       // Add type-specific data

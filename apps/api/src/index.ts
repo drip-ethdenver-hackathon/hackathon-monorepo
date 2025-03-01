@@ -21,6 +21,8 @@ import { WalletTransferAgent } from "./lib/agents/WalletTransferAgent";
 import { PhoneWalletLookupAgent } from "./lib/agents/PhoneWalletLookupAgent";
 import { IndexedDatabaseFetcherAgent } from './lib/agents/IndexedDatabaseFetcherAgent';
 import { Pinecone } from "@pinecone-database/pinecone";
+import { createWalletClient } from "viem";
+import { privateKeyToAccount } from "viem/accounts";
 
 dotenv.config();
 
@@ -93,12 +95,27 @@ orchestrator.listAgents().forEach(async (agent) => {
 });
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+
 if (!OPENAI_API_KEY) {
   console.log(chalk.redBright("Missing OPENAI_API_KEY in environment."));
   throw new Error("Missing OPENAI_API_KEY in .env file.");
 }
 
 const PORT = parseInt(process.env.PORT || "5050");
+const spenderPrivateKey = process.env.SPENDER_PRIVATE_KEY! as Hex;
+
+async function getSpenderWalletClient() {
+  const spenderAccount = privateKeyToAccount(
+    spenderPrivateKey
+  );
+ 
+  const spenderWallet = await createWalletClient({
+    account: spenderAccount,
+    chain: baseMainnet,
+    transport: http(),
+  });
+  return spenderWallet;
+}
 
 const SYSTEM_MESSAGE = `
 You are the Orchestration Assistant, responsible for coordinating with specialized sub-agents to fulfill user requests.

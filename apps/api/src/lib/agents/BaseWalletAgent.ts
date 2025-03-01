@@ -98,7 +98,7 @@ export abstract class BaseWalletAgent implements Agent {
       // Create the appropriate wallet config based on wallet type
       const config: WalletConfig = {
         type: wallet.walletType as WalletType,
-        networkId: wallet.networkId || base.id,
+        networkId: wallet.networkId || 'base-mainnet',
       };
       
       // Add type-specific data
@@ -536,7 +536,7 @@ export abstract class BaseWalletAgent implements Agent {
       const result = await walletDetailsAction.invoke({});
       this.recentAction = "Retrieved native token balance";
 
-      console.log('Wallet details result:', result);
+      // console.log('Wallet details result:', result);
       
       // Parse the result string to extract balance information
       let address = '';

@@ -510,6 +510,93 @@ export abstract class BaseWalletAgent implements Agent {
   }
 
   /**
+   * Get the native token balance of the wallet
+   * @returns Native token balance information
+   */
+  async getNativeBalance(): Promise<any> {
+    try {
+      await this.initializeAgentKit();
+      
+      // Find the wallet details action
+      const actions = this.agentKitClient!.getActions();
+      const walletDetailsAction = actions.find(a => a.name === "WalletActionProvider_get_wallet_details");
+      
+      if (!walletDetailsAction) {
+        throw new Error("WalletActionProvider_get_wallet_details action not found");
+      }
+      
+      // The result is a string with human readable text
+      const result = await walletDetailsAction.invoke({});
+      this.recentAction = "Retrieved native token balance";
+
+      console.log('Wallet details result:', result);
+      
+      // Parse the result string to extract balance information
+      let address = '';
+      let balance = '0';
+      let network = 'unknown';
+      let provider = '';
+      
+      // Parse based on the format shown in the example
+      if (typeof result === 'string') {
+        // Extract provider
+        const providerMatch = result.match(/Provider:\s*([^\n]+)/);
+        if (providerMatch && providerMatch[1]) provider = providerMatch[1].trim();
+        
+        // Extract address
+        const addressMatch = result.match(/Address:\s*([0-9a-fA-Fx]+)/);
+        if (addressMatch && addressMatch[1]) address = addressMatch[1].trim();
+        
+        // Extract network info
+        const networkMatch = result.match(/Network ID:\s*([^\n]+)/);
+        if (networkMatch && networkMatch[1]) network = networkMatch[1].trim();
+        
+        // Extract balance - looking for format like "Native Balance: 0 WEI"
+        const balanceMatch = result.match(/Native Balance:\s*([0-9.]+)\s*([A-Za-z]+)/);
+        if (balanceMatch && balanceMatch[1]) {
+          const amount = balanceMatch[1];
+          const unit = balanceMatch[2];
+          
+          // Format the balance nicely
+          if (unit.toUpperCase() === 'WEI' && amount === '0') {
+            balance = '0 ETH';
+          } else if (unit.toUpperCase() === 'WEI') {
+            // Convert WEI to ETH for better readability
+            const ethValue = parseFloat(amount) / 1e18;
+            balance = ethValue > 0.00001 ? `${ethValue.toFixed(6)} ETH` : '< 0.00001 ETH';
+          } else {
+            balance = `${amount} ${unit}`;
+          }
+        }
+      }
+      
+      return {
+        success: true,
+        address,
+        balance,
+        network,
+        provider
+      };
+    } catch (err) {
+      this.recentAction = `Failed to get native balance: ${String(err)}`;
+      return {
+        success: false,
+        message: `Failed to get native balance: ${String(err)}`
+      };
+    }
+  }
+
+  /**
+   * Get the current wallet balance (convenience property)
+   * @returns The current wallet balance as a string, or null if unavailable
+   */
+  get balance(): Promise<string | null> {
+    return this.getNativeBalance()
+      .then(result => result.success ? result.balance : null)
+      .catch(() => null);
+  }
+
+  /**
    * Returns any relevant context or the most recent action for this agent,
    * useful for debugging or agent introspection.
    */

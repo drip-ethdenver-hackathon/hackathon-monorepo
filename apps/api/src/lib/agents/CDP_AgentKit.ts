@@ -62,7 +62,13 @@ export class AgentKitBasedAgent extends BaseWalletAgent {
             'ERC20ActionProvider_transfer',
             'Erc721ActionProvider_mint',
             'Erc721ActionProvider_transfer',
-            'Erc721ActionProvider_get_balance'
+            'Erc721ActionProvider_get_balance',
+            'MorphoActionProvider_deposit',
+            'MorphoActionProvider_withdraw',
+            'CdpWalletActionProvider_deploy_contract',
+            'CdpWalletActionProvider_deploy_nft',
+            'CdpWalletActionProvider_deploy_token',
+            'CdpWalletActionProvider_trade'
           ]
         },
         // Address Reputation Parameters
@@ -114,6 +120,72 @@ export class AgentKitBasedAgent extends BaseWalletAgent {
         tokenId: {
           type: "string",
           description: "The ID of the specific NFT to transfer. Required for NFT transfer."
+        },
+        
+        // Morpho Parameters
+        vaultAddress: {
+          type: "string",
+          description: "The address of the Morpho Vault to deposit to or withdraw from. Required for Morpho operations."
+        },
+        assets: {
+          type: "string",
+          description: "The amount of assets to deposit or withdraw. For deposits, use whole units (e.g. 1 WETH). For withdrawals, use atomic units (wei). Required for Morpho operations."
+        },
+        receiver: {
+          type: "string",
+          description: "The address to receive the shares. Required for Morpho operations."
+        },
+        tokenAddress: {
+          type: "string",
+          description: "The address of the token to approve for deposit. Required for Morpho deposit."
+        },
+        
+        // Deploy NFT Parameters
+        name: {
+          type: "string",
+          description: "The name of the NFT collection or token. Required for deploy_nft and deploy_token."
+        },
+        baseUri: {
+          type: "string",
+          description: "The base URI for the token metadata. Required for deploy_nft."
+        },
+        totalSupply: {
+          type: "string",
+          description: "The total supply of the token. Required for deploy_token."
+        },
+        
+        // Deploy Contract Parameters
+        solidityVersion: {
+          type: "string",
+          description: "The Solidity version to use for contract deployment. Must be >= 0.8.0 and <= 0.8.28. Required for deploy_contract."
+        },
+        solidityInputJson: {
+          type: "string",
+          description: "The Solidity input JSON for contract deployment. Required for deploy_contract."
+        },
+        contractName: {
+          type: "string",
+          description: "The name of the contract to deploy. Required for deploy_contract."
+        },
+        constructorArgs: {
+          type: "object",
+          description: "The constructor arguments for the contract. Required if the contract has a constructor."
+        },
+        
+        // Trade Parameters
+        amount: {
+          type: "string",
+          description: "The amount of the 'from asset' to trade. Required for trade."
+        },
+        fromAssetId: {
+          type: "string",
+          description: "The asset ID to trade from. Required for trade.",
+          examples: ["eth", "usdc"]
+        },
+        toAssetId: {
+          type: "string",
+          description: "The asset ID to receive from the trade. Required for trade.",
+          examples: ["eth", "usdc"]
         }
       },
       required: ["actionName"],
@@ -184,6 +256,14 @@ export class AgentKitBasedAgent extends BaseWalletAgent {
 
       // Get all available actions from AgentKit
       const actions = this.agentKitClient!.getActions();
+
+      console.log("Available actions:", actions.map(a => {
+        return {
+          name: a.name,
+          description: a.description,
+          schema: JSON.stringify(a.schema)
+        }
+      }));
       
       // Find the requested action
       const action = actions.find(a => a.name === actionName);

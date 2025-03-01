@@ -20,6 +20,7 @@ export class PhoneWalletLookupAgent extends BaseWalletAgent {
 
   async initializeEnvironment(envData: any): Promise<void>  {
     this.environment = envData;
+    console.log('envDataForPhoneWalletLookupAgent', this.environment);
   }
 
   getParametersJsonSchema(): object {
@@ -54,6 +55,7 @@ export class PhoneWalletLookupAgent extends BaseWalletAgent {
    */
   private normalizePhoneNumber(phoneNumber: string): string {
     // Remove all non-digit characters except the leading +
+    console.log('phoneNumberBefore', phoneNumber);
     let normalized = phoneNumber.trim();
     
     // Ensure it starts with + if it doesn't already
@@ -108,6 +110,7 @@ export class PhoneWalletLookupAgent extends BaseWalletAgent {
         case 'phone_to_wallet':
         case 'env': {
           const normalizedPhone = this.normalizePhoneNumber(phoneNumber);
+          console.log('normalizedPhone', normalizedPhone);
           this.recentAction = `Looking up wallet for phone: ${normalizedPhone}`;
           
           // Try with full number first

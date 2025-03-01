@@ -80,8 +80,10 @@ export function attachTwilio(
           console.log('Phone number:', phoneNumber, msg);
 
           for (const agent of orchestrator.listAgents()) {
-            await agent.initializeEnvironment({ phoneNumber });
-            console.log('Agent initialized:', agent.getName() + ' with phone number: ' + phoneNumber);
+            if (agent.getName() === 'phone_wallet_lookup') {
+              await agent.initializeEnvironment({ phoneNumber });
+              console.log('Agent initialized:', agent.getName() + ' with phone number: ' + phoneNumber);
+            }
           }
           
           console.log(chalk.greenBright(`Stream started: ${streamSid}`));

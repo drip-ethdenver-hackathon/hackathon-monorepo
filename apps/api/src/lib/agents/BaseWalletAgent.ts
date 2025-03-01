@@ -12,7 +12,9 @@ import {
   SmartWalletProvider,
   SolanaKeypairWalletProvider,
   WalletProvider,
-  walletActionProvider
+  walletActionProvider,
+  morphoActionProvider,
+  cdpWalletActionProvider
 } from "@coinbase/agentkit";
 import { cdpApiActionProvider, pythActionProvider, erc20ActionProvider, erc721ActionProvider } from "@coinbase/agentkit";
 import { PrismaClient } from "@repo/database";
@@ -434,6 +436,11 @@ export abstract class BaseWalletAgent implements Agent {
             pythActionProvider(),
             erc20ActionProvider(),
             erc721ActionProvider(),
+            morphoActionProvider(),
+            cdpWalletActionProvider({
+                apiKeyName: this.cdpApiKeyName,
+                apiKeyPrivateKey: this.cdpApiKeyPrivateKey,
+            })
         ],
       });
 

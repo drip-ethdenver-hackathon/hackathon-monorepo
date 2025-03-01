@@ -1,6 +1,8 @@
  'use client';
 
  import {PrivyProvider} from '@privy-io/react-auth';
+ import {SmartWalletsProvider} from '@privy-io/react-auth/smart-wallets';
+
 
 export default function Providers({children}: {children: React.ReactNode}) {
   return (
@@ -15,11 +17,13 @@ export default function Providers({children}: {children: React.ReactNode}) {
         },
         // Create embedded wallets for users who don't have a wallet
         embeddedWallets: {
-          createOnLogin: 'users-without-wallets',
+          createOnLogin: 'all-users',
         },
       }}
     >
-      {children}
+      <SmartWalletsProvider>
+        {children}
+      </SmartWalletsProvider>
     </PrivyProvider>
   );
 }

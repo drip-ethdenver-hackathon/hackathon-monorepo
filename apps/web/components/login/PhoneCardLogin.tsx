@@ -5,6 +5,8 @@ import { Button, Input, PhoneInput } from "@repo/ui/components";
 import { getAccessToken, useLoginWithSms } from "@privy-io/react-auth";
 import Logo from "../Logo";
 import { useRouter } from "next/navigation";
+import {useCreateWallet} from '@privy-io/react-auth';
+
 
 export default function PhoneLoginCard() {
   const router = useRouter();
@@ -13,16 +15,44 @@ export default function PhoneLoginCard() {
   const [verificationCode, setVerificationCode] = useState("");
   const [showVerification, setShowVerification] = useState(false);
 
+  const {createWallet} = useCreateWallet();
+
   const { sendCode, loginWithCode, state } = useLoginWithSms({
-    onComplete: ({ user, isNewUser, wasAlreadyAuthenticated, loginMethod }) => {
+    onComplete: async ({ user, isNewUser, wasAlreadyAuthenticated, loginMethod }) => {
       console.log("Login successful", {
         user,
         isNewUser,
         wasAlreadyAuthenticated,
         loginMethod,
       });
-      const token = getAccessToken();
-      console.log('token', token);
+      if (isNewUser || !user.wallet) {
+        await createWallet();
+      }
+      const token = await getAccessToken();
+      
+      // Call connect endpoint to store user data
+      try {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/connect`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          credentials: 'include',
+          mode: 'cors'
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to connect user');
+        }
+
+        const data = await response.json();
+        console.log('User connected:', data);
+      } catch (error) {
+        console.error('Connect error:', error);
+        // Handle error appropriately
+      }
+
       router.push("/home");
     },
     onError: (error) => {

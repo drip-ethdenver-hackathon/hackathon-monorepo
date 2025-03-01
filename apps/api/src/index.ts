@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 import http from 'http';
 import WebSocket from 'ws';
 import chalk from 'chalk';
+import cors from 'cors';
 import { incomingCallRouter } from './routes/incomingCall';
 import { simulateCallRouter } from './routes/simulateCall';
 import { Orchestrator } from './lib/framework/Orchestrator';
@@ -15,12 +16,23 @@ import { chatMessageHandler } from './routes/chatMessage';
 import { agentsHandler } from './routes/agents';
 import { ScheduledBalanceAgent } from './lib/agents/ScheduledBalanceAgent';
 import { SearchAgent } from './lib/agents/SearchAgent';
+import { connectRouter } from './routes/connect';
 
 dotenv.config();
+
 
 const app = express();
 app.use(express.json());
 app.use(express.static('public'));
+
+app.use(cors({
+  origin: process.env.NODE_ENV === 'production' 
+    ? process.env.CORS_ORIGIN // Set this in production
+    : ['http://localhost:3000', 'http://127.0.0.1:3000'], // Development origins
+  credentials: true, // If you need to send cookies
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 
 const orchestrator = new Orchestrator();
 
@@ -79,6 +91,8 @@ app.post(
 app.use('/simulate-call', simulateCallRouter);
 
 app.use('/agents', agentsHandler(orchestrator));
+
+app.use('/connect', connectRouter);
 
 const server = http.createServer(app);
 

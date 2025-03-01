@@ -16,6 +16,7 @@ import { chatMessageHandler } from './routes/chatMessage';
 import { agentsHandler } from './routes/agents';
 import { ScheduledBalanceAgent } from './lib/agents/ScheduledBalanceAgent';
 import { SearchAgent } from './lib/agents/SearchAgent';
+import { indexerRouter } from './routes/indexer';
 import { connectRouter } from './routes/connect';
 
 dotenv.config();
@@ -60,7 +61,7 @@ to fulfill user requests. The first thing you should do even before the user spe
    When you need specific functionality, call the relevant agent by name, providing correct JSON arguments
    according to its schema. Do not distort or alter the user’s input in ways that might change the intended context.
 
-2. **Non-Deterministic Reasoning:** You can reason about the user’s request in a flexible, non-deterministic way.
+2. Non-Deterministic Reasoning: You can reason about the user's request in a flexible, non-deterministic way. 
    If necessary, break down complex requests into multiple steps. You may call multiple agents or re-check 
    environment data until you have sufficient information to respond confidently.
 
@@ -100,16 +101,17 @@ app.get('/', (req, res) => {
 
 app.use('/incoming-call', incomingCallRouter);
 
-app.post(
-  '/chat-message',
-  chatMessageHandler(orchestrator, SYSTEM_MESSAGE, OPENAI_API_KEY)
-);
+app.post('/chat-message', (req, res) => {
+  chatMessageHandler(orchestrator, SYSTEM_MESSAGE, OPENAI_API_KEY)(req, res);
+});
 
 app.use('/simulate-call', simulateCallRouter);
 
 app.use('/agents', agentsHandler(orchestrator));
 
 app.use('/connect', connectRouter);
+
+app.use('/index-docs', indexerRouter);
 
 const server = http.createServer(app);
 
@@ -140,7 +142,6 @@ agentStreamServer.on('connection', (ws) => {
 });
 
 function broadcastAgentEvent(eventData: any) {
-  console.log(chalk.magenta('Broadcasting agent event:'), eventData);
   for (const ws of agentStreamClients) {
     if (ws.readyState === WebSocket.OPEN) {
       ws.send(JSON.stringify(eventData));

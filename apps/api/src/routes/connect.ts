@@ -19,7 +19,7 @@ router.post('/', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Missing or invalid authorization header' });
     }
 
-    const idToken = authHeader.split(' ')[1]; // Get the token part after 'Bearer '
+    const idToken = authHeader.split(' ')[1];
     
     if (!idToken) {
       return res.status(400).json({ error: 'Missing access token' });

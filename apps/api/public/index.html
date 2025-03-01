@@ -5,66 +5,62 @@
   <title>AI Orchestrator Demo</title>
   <style>
     body {
-      margin: 0; 
-      padding: 0; 
+      margin: 0;
+      padding: 0;
       font-family: sans-serif;
-      display: flex; 
+      display: flex;
       height: 100vh;
     }
-
-    #chat-container, 
+    #chat-container,
     #right-panel {
-      flex: 1; 
-      padding: 10px; 
+      flex: 1;
+      padding: 10px;
       overflow-y: auto;
-      border: 1px solid #ccc; 
+      border: 1px solid #ccc;
       box-sizing: border-box;
     }
-
     #chat-container {
-      display: flex; 
+      display: flex;
       flex-direction: column;
     }
-
     #messages {
-      flex: 1; 
-      overflow-y: auto; 
-      margin-bottom: 10px; 
-      border: 1px solid #ddd; 
+      flex: 1;
+      overflow-y: auto;
+      margin-bottom: 10px;
+      border: 1px solid #ddd;
       padding: 5px;
       background: #fafafa;
     }
-
-    #messageInput { width: 70%; }
-
+    #messageInput {
+      width: 70%;
+    }
     .message {
       margin: 5px 0;
     }
-    .message.user { font-weight: bold; }
-    .message.assistant { font-style: italic; }
-
-    /* Right panel layout */
+    .message.user {
+      font-weight: bold;
+    }
+    .message.assistant {
+      font-style: italic;
+    }
     #right-panel {
       display: flex;
       flex-direction: column;
-      margin-left: -1px; 
+      margin-left: -1px;
       background: #f1f1f1;
     }
-
     #log-container {
-      flex: 1; 
+      flex: 1;
       background: #f1f1f1;
       border: 1px solid #ddd;
       overflow-y: auto;
       margin-bottom: 5px;
     }
-
-    #log-list { 
-      list-style: none; 
-      padding: 0; 
-      margin: 0; 
+    #log-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
     }
-
     #log-list li {
       margin: 4px 0;
       padding: 3px 5px;
@@ -73,51 +69,58 @@
       font-size: 0.85em;
       word-wrap: break-word;
     }
-
     #agent-container {
-      flex: 1; 
+      flex: 1;
       overflow-y: auto;
       border: 1px solid #ddd;
       padding: 5px;
       background: #fafafa;
     }
-
+    /* New flex container for agents */
+    #agent-dots {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+    }
     .agent-box {
-      display: inline-block;
-      width: 110px;
-      padding: 6px;
-      margin: 4px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 200px;
+      height: 200px;
       border: 2px solid #aaa;
-      border-radius: 6px;
+      border-radius: 20px;
       background: #eee;
       cursor: pointer;
       text-align: center;
+      box-sizing: border-box;
+      font-size: 1.2em;
+      font-weight: bold;
+      overflow: hidden;
+      padding: 10px;
     }
-
     .agent-box:hover {
       border-color: #777;
     }
-
-    /* Different statuses => different classes */
     .agent-idle {
-      background-color: #ddd; /* Gray when idle */
+      background-color: #ddd;
     }
     .agent-active {
-      background-color: #bdf6bd; /* Light green when active */
+      background-color: #bdf6bd;
     }
     .agent-error {
-      background-color: #f6bdbd; /* Light red for errors */
+      background-color: #f6bdbd;
     }
     .agent-updating {
-      background-color: #add8e6; /* Light blue for environment updating */
+      background-color: #add8e6;
     }
-
     #agent-modal {
       display: none;
       position: fixed;
       z-index: 999;
-      left: 50%; 
-      top: 50%; 
+      left: 50%;
+      top: 50%;
       transform: translate(-50%, -50%);
       background: #fff;
       border: 2px solid #333;
@@ -126,19 +129,16 @@
       max-height: 60%;
       overflow-y: auto;
     }
-
     #agent-modal h4 {
       margin-top: 0;
     }
-
     #agent-modal .close {
-      cursor: pointer; 
-      color: red; 
-      float: right; 
+      cursor: pointer;
+      color: red;
+      float: right;
       font-weight: bold;
       margin-left: 10px;
     }
-
     .log-message {
       padding: 5px 8px;
       margin: 4px 0;
@@ -166,24 +166,21 @@
       </label>
     </div>
   </div>
-
   <div id="right-panel">
     <div id="log-container">
       <h3>Orchestrator Logs</h3>
       <ul id="log-list"></ul>
     </div>
     <div id="agent-container">
-      <h3>Available Agents</h3>
+      <h3>Agents</h3>
       <div id="agent-dots"></div>
     </div>
   </div>
-
   <div id="agent-modal">
     <span class="close" id="agent-modal-close">X</span>
-    <h4>Agent Details</h4>
+    <h4>Agent</h4>
     <div id="agent-info"></div>
   </div>
-
   <script>
     const messagesDiv = document.getElementById('messages');
     const messageInput = document.getElementById('messageInput');
@@ -195,7 +192,6 @@
     const agentModalClose = document.getElementById('agent-modal-close');
     const agentInfoDiv = document.getElementById('agent-info');
 
-    // Load conversation from server (demo only)
     window.addEventListener('DOMContentLoaded', async () => {
       try {
         const resp = await fetch('/chat-history');
@@ -214,23 +210,17 @@
       connectAgentStream();
     });
 
-    // Connect orchestrator logs:
     let logWs;
     function connectLogStream() {
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
       const host = window.location.host;
       const wsUrl = `${protocol}//${host}/orchestrator-stream`;
-
       logWs = new WebSocket(wsUrl);
       logWs.onopen = () => appendLog("Connected to orchestrator stream");
       logWs.onmessage = (evt) => {
         try {
           const data = JSON.parse(evt.data);
-          
-          // Add to logs
           appendLog(JSON.stringify(data));
-          
-          // If it's a message, also add to chat
           if (data.type === 'message') {
             const sender = data.role === 'user' ? 'You' : 'Assistant';
             addMessageToChat(sender, data.content, data.role);
@@ -251,47 +241,21 @@
 
     function appendLog(content) {
       const li = document.createElement('li');
-      
-      // Try to parse JSON messages
       try {
         const data = typeof content === 'string' ? JSON.parse(content) : content;
-        
-        // Format message logs specially
         if (data.type === 'message') {
           const timestamp = new Date(data.timestamp).toLocaleTimeString();
           li.textContent = `[${timestamp}] ${data.role}: ${data.content}`;
           li.className = `log-message log-${data.role}`;
         } else {
-          // For non-message logs, stringify the whole object
           li.textContent = JSON.stringify(data, null, 2);
         }
       } catch (e) {
-        // If not JSON, display as plain text
         li.textContent = content;
       }
-
       logList.appendChild(li);
       logList.scrollTop = logList.scrollHeight;
     }
-
-    // Add CSS for message formatting
-    const style = document.createElement('style');
-    style.textContent = `
-      .log-message {
-        padding: 5px 8px;
-        margin: 4px 0;
-        border-radius: 4px;
-      }
-      .log-user {
-        background: #e3f2fd;
-        border-left: 4px solid #2196f3;
-      }
-      .log-assistant {
-        background: #f5f5f5;
-        border-left: 4px solid #9e9e9e;
-      }
-    `;
-    document.head.appendChild(style);
 
     sendBtn.addEventListener('click', sendMessage);
     messageInput.addEventListener('keyup', (e) => {
@@ -310,9 +274,7 @@
       const text = messageInput.value.trim();
       if (!text) return;
       addMessageToChat('You', text, 'user');
-
       messageInput.value = '';
-
       try {
         const resp = await fetch('/chat-message', {
           method: 'POST',
@@ -324,7 +286,6 @@
         if (data.error) {
           addMessageToChat('System', 'Error: ' + data.error, 'assistant');
         } else {
-          // Provide a fallback if data.response is empty or null
           addMessageToChat('Assistant', data.response || '(No final text?)', 'assistant');
         }
       } catch (err) {
@@ -332,13 +293,11 @@
       }
     }
 
-    // Speech
     let recognition;
     if ('webkitSpeechRecognition' in window) {
       recognition = new webkitSpeechRecognition();
       recognition.continuous = false;
       recognition.interimResults = false;
-
       recognition.onresult = (event) => {
         const transcript = event.results[0][0].transcript;
         messageInput.value = transcript;
@@ -360,7 +319,6 @@
       }
     });
 
-    // Load Agents from /agents
     async function loadAgents() {
       try {
         const resp = await fetch('/agents');
@@ -375,19 +333,16 @@
       }
     }
 
-    // Agent Stream
     let agentWs;
     function connectAgentStream() {
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
       const host = window.location.host;
       const wsUrl = `${protocol}//${host}/agent-stream`;
-
       agentWs = new WebSocket(wsUrl);
       agentWs.onopen = () => console.log("Connected to agent-stream");
       agentWs.onmessage = (evt) => {
         try {
           const eventData = JSON.parse(evt.data);
-          // Handle message events for chat display
           if (eventData.type === 'message') {
             addMessageToChat(
               eventData.role === 'user' ? 'You' : 'Assistant',
@@ -413,7 +368,7 @@
     let agentList = [];
     function handleAgentStreamEvent(event) {
       if (event.type === 'agent_full_list') {
-        agentList = event.agents; 
+        agentList = event.agents;
         renderAgents(agentList);
       } else if (event.type === 'agent_added') {
         agentList.push(event.agent);
@@ -433,12 +388,9 @@
     function renderAgents(agents) {
       const container = document.getElementById('agent-dots');
       container.innerHTML = '';
-
       agents.forEach(agent => {
         const box = document.createElement('div');
-        box.className = 'agent-box'; 
-
-        // Apply style depending on status
+        box.className = 'agent-box';
         if (agent.status === 'ACTIVE') {
           box.classList.add('agent-active');
         } else if (agent.status === 'UPDATING') {
@@ -446,16 +398,9 @@
         } else if (agent.status === 'ERROR') {
           box.classList.add('agent-error');
         } else {
-          // default idle style
           box.classList.add('agent-idle');
         }
-
-        // Insert text
-        box.innerHTML = `
-          <strong>${agent.name}</strong><br/>
-          <span>${agent.description}</span>
-        `;
-
+        box.innerHTML = `<strong>${agent.name}</strong>`;
         box.addEventListener('click', () => showAgentModal(agent));
         container.appendChild(box);
       });
@@ -465,8 +410,6 @@
       agentModal.style.display = 'block';
       agentInfoDiv.innerHTML = `
         <p><strong>Name:</strong> ${agent.name}</p>
-        <p><strong>Description:</strong> ${agent.description}</p>
-        <p><strong>Recent Context:</strong> ${agent.contextInfo}</p>
         <p><strong>Status:</strong> ${agent.status || 'IDLE'}</p>
       `;
     }

@@ -42,7 +42,6 @@ export class SearchAgent implements Agent {
     return this.recentAction;
   }
 
-  // Optional method to provide info about model
   getReasoningModel?(): string {
     return `Ora: ${this.oraModelName}`;
   }

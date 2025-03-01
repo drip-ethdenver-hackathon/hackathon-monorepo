@@ -14,3 +14,14 @@ model User {
   phone     String   @unique
   privyId   String   @unique
 }
+
+model AgentWallet {
+  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  agentName     String    @unique
+  walletType    String    // CDP, VIEM, SMART, SOLANA
+  walletData    String    // JSON stringified wallet data
+  networkId     String?   // Optional network ID
+  address       String?   // Wallet address (if available)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
